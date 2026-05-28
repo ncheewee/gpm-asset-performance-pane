@@ -1,0 +1,1237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPM Asset Performance Pane</title>
+  <style>
+    :root {
+      --ink: #16202a;
+      --muted: #66717d;
+      --line: #dce3ea;
+      --page: #f3f6f8;
+      --panel: #fff;
+      --nav: #21313f;
+      --nav-2: #304354;
+      --green: #11806a;
+      --blue: #2f68b1;
+      --orange: #bd7416;
+      --red: #b83d34;
+      --green-bg: #e8f5ef;
+      --orange-bg: #fff2d9;
+      --red-bg: #fae6e2;
+      --shadow: 0 14px 34px rgba(24, 35, 47, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, select { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .side {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 12px 18px 0;
+      color: white;
+      background: var(--nav);
+      display: grid;
+      grid-template-columns: minmax(390px, max-content) minmax(360px, 1fr) auto;
+      align-items: end;
+      gap: 18px;
+      box-shadow: 0 10px 24px rgba(20, 30, 40, .14);
+    }
+
+    .brand {
+      padding: 0 8px 12px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+
+    .brand span {
+      color: #b8c5d0;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .nav {
+      display: flex;
+      gap: 4px;
+      align-items: end;
+    }
+
+    .nav button {
+      border: 0;
+      border-radius: 8px 8px 0 0;
+      min-height: 42px;
+      padding: 0 14px;
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      align-items: center;
+      gap: 8px;
+      color: #dce7ef;
+      background: rgba(255,255,255,.08);
+      text-align: left;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.08);
+      border-bottom: 0;
+    }
+
+    .nav button:hover,
+    .nav button.active {
+      color: white;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 12px;
+      padding: 0 0 10px;
+      align-items: start;
+      justify-self: end;
+    }
+
+    .data-actions {
+      padding-bottom: 10px;
+      justify-self: end;
+    }
+
+    .data-link {
+      min-height: 34px;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: white;
+      background: rgba(255,255,255,.1);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .data-link:hover {
+      background: rgba(255,255,255,.18);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      color: #c8d3dd;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      min-height: 32px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      padding: 0 10px;
+      color: #dce7ef;
+      background: rgba(255,255,255,.06);
+      cursor: pointer;
+    }
+
+    .chip:hover,
+    .chip.active {
+      color: white;
+      background: #172633;
+      border-color: rgba(255,255,255,.42);
+    }
+
+    main {
+      padding: 18px 24px 24px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 40px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 680px;
+    }
+
+    .period {
+      display: flex;
+      gap: 8px;
+      min-width: max-content;
+    }
+
+    .period button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 12px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .period button.active {
+      color: white;
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .view {
+      display: none;
+      gap: 18px;
+    }
+
+    .view.active { display: grid; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .card, .panel, .asset-tile, .country-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      min-height: 112px;
+      padding: 15px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+      border-top: 5px solid var(--blue);
+    }
+
+    .card.area { border-top-color: var(--blue); }
+    .card.cost { border-top-color: var(--red); }
+    .card.energy { border-top-color: var(--orange); }
+    .card.mix { border-top-color: var(--green); }
+    .card.heat { border-top-color: var(--red); }
+    .card.trend { border-top-color: var(--orange); }
+
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .value {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .delta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .delta.good { color: var(--green); }
+    .delta.hot { color: var(--red); }
+    .delta.warn { color: var(--orange); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 56px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      gap: 12px;
+    }
+
+    .panel-head strong { font-size: 15px; }
+    .panel-head span { color: var(--muted); font-size: 12px; }
+
+    .asset-grid {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .asset-tile {
+      box-shadow: none;
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+      border-left: 5px solid var(--green);
+      cursor: pointer;
+    }
+
+    .asset-tile.warn { border-left-color: var(--orange); }
+    .asset-tile.hot { border-left-color: var(--red); }
+    .asset-tile.active { outline: 3px solid rgba(47, 104, 177, .2); }
+
+    .asset-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .asset-name strong { display: block; font-size: 15px; }
+    .asset-name span { color: var(--muted); font-size: 12px; }
+
+    .score {
+      min-width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--green);
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .score.warn { background: var(--orange); }
+    .score.hot { background: var(--red); }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .mini {
+      padding: 8px;
+      border-radius: 7px;
+      background: #f6f8fa;
+      min-height: 54px;
+    }
+
+    .mini span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .mini strong { font-size: 13px; }
+
+    .spark {
+      height: 30px;
+      display: flex;
+      align-items: end;
+      gap: 3px;
+    }
+
+    .spark-labels {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .spark i {
+      flex: 1;
+      min-width: 4px;
+      border-radius: 3px 3px 0 0;
+      background: #aebbc7;
+    }
+
+    .spark.hot i:nth-last-child(-n+2) { background: var(--red); }
+    .spark.warn i:nth-last-child(-n+2) { background: var(--orange); }
+    .spark.good i { background: var(--green); }
+
+    .country-stack {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .country-card {
+      box-shadow: none;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .country-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+
+    .country-head strong { font-size: 18px; }
+    .country-head span { color: var(--muted); font-size: 12px; }
+
+    .stack-bar {
+      height: 16px;
+      display: flex;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #eef2f5;
+    }
+
+    .stack-bar span { display: block; }
+    .stack-bar .office { background: var(--blue); }
+    .stack-bar .retail { background: var(--orange); }
+    .stack-bar .logistics { background: var(--green); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+      background: var(--blue);
+    }
+
+    .dot.retail { background: var(--orange); }
+    .dot.logistics { background: var(--green); }
+
+    .bubble-wrap {
+      padding: 14px;
+    }
+
+    .bubble-chart {
+      position: relative;
+      height: 380px;
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(to right, rgba(102,113,125,.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(102,113,125,.1) 1px, transparent 1px),
+        linear-gradient(to right, transparent 49%, rgba(102,113,125,.14) 50%, transparent 51%),
+        linear-gradient(to bottom, transparent 49%, rgba(102,113,125,.14) 50%, transparent 51%);
+      background-size: 25% 100%, 100% 25%, auto, auto;
+      margin: 22px 18px 20px 42px;
+    }
+
+    .arrow-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .axis-title {
+      position: absolute;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .axis-title.y {
+      left: -40px;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      white-space: nowrap;
+    }
+
+    .axis-title.x {
+      right: 0;
+      bottom: -34px;
+    }
+
+    .tick {
+      position: absolute;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .tick.x { bottom: -20px; transform: translateX(-50%); }
+    .tick.y { left: -34px; transform: translateY(50%); }
+
+    .bubble {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      bottom: var(--y);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--green);
+      transform: translate(-50%, 50%);
+      font-size: 11px;
+      font-weight: 800;
+      box-shadow: 0 10px 22px rgba(28, 39, 52, .18);
+      border: 0;
+      cursor: pointer;
+      text-shadow: 0 1px 3px rgba(0,0,0,.65), 0 0 8px rgba(0,0,0,.35);
+    }
+
+    .bubble.warn { background: var(--orange); }
+    .bubble.hot { background: var(--red); }
+
+    .ghost {
+      position: absolute;
+      width: calc(var(--size) * .72);
+      height: calc(var(--size) * .72);
+      left: var(--gx);
+      bottom: var(--gy);
+      border-radius: 50%;
+      background: var(--ghost);
+      opacity: .28;
+      transform: translate(-50%, 50%);
+      pointer-events: none;
+    }
+
+    .axis-note {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      padding-top: 9px;
+    }
+
+    .plot-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      padding-top: 8px;
+    }
+
+    .legend-ring {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px dashed rgba(22, 32, 42, .35);
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: -2px;
+    }
+
+    .cost-list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .cost-line {
+      display: grid;
+      gap: 6px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .cost-line:hover .popover,
+    .cost-line:focus-within .popover,
+    .cost-line.open .popover {
+      display: grid;
+    }
+
+    .cost-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .meter {
+      height: 11px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #eef2f5;
+    }
+
+    .meter i {
+      display: block;
+      height: 100%;
+      width: var(--w);
+      background: var(--blue);
+    }
+
+    .meter.energy i { background: var(--orange); }
+    .meter.services i { background: var(--green); }
+    .meter.repairs i { background: var(--red); }
+
+    .popover {
+      display: none;
+      position: absolute;
+      z-index: 3;
+      top: 46px;
+      right: 0;
+      width: min(280px, 84vw);
+      gap: 5px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 18px 38px rgba(22,32,42,.18);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .popover strong { color: var(--ink); font-size: 13px; }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table th,
+    .table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #e8edf2;
+      text-align: left;
+    }
+
+    .table th {
+      color: var(--muted);
+      background: #f8fafb;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .pill {
+      display: inline-flex;
+      justify-content: center;
+      min-width: 76px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .pill.warn { background: var(--orange-bg); color: var(--orange); }
+    .pill.hot { background: var(--red-bg); color: var(--red); }
+
+    .detail {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+    }
+
+    .profile {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .profile h2 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.05;
+    }
+
+    .facts {
+      display: grid;
+      gap: 9px;
+    }
+
+    .facts div {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px solid #e8edf2;
+      padding-bottom: 8px;
+    }
+
+    .facts span { color: var(--muted); }
+
+    .bars {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .big-chart {
+      height: 260px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 8px;
+      align-items: end;
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 8px 0;
+    }
+
+    .month {
+      height: 100%;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 8px;
+      align-items: end;
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .month i {
+      display: block;
+      min-height: 18px;
+      height: var(--h);
+      border-radius: 5px 5px 0 0;
+      background: linear-gradient(180deg, var(--blue), var(--green));
+    }
+
+    @media (max-width: 1120px) {
+      .side { position: static; grid-template-columns: minmax(340px, 1fr) auto; align-items: end; padding-bottom: 0; }
+      .nav { display: grid; grid-template-columns: repeat(3, minmax(130px, 1fr)); }
+      .filters { grid-column: 1 / -1; justify-self: start; margin-top: 0; grid-template-columns: auto auto; padding-bottom: 10px; }
+      .data-actions { grid-column: 2; grid-row: 1; }
+      .kpis { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+      .grid-2, .detail { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 18px 12px; }
+      .topbar { flex-direction: column; align-items: start; }
+      .side { grid-template-columns: 1fr; padding-bottom: 10px; }
+      .nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+      .nav button { padding: 0 8px; grid-template-columns: 1fr; justify-items: center; text-align: center; font-size: 12px; }
+      .nav button span:first-child { display: none; }
+      .filters { display: grid; grid-template-columns: 1fr; }
+      .data-actions { grid-column: auto; grid-row: auto; justify-self: start; padding-bottom: 0; }
+      .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .card { min-height: 98px; padding: 10px; }
+      .value { font-size: 18px; }
+      .label, .delta { font-size: 10px; }
+      .asset-grid { display: grid; grid-template-columns: 1fr; }
+      .bubble-chart { height: 300px; }
+      .table-wrap { overflow-x: auto; }
+      .table { min-width: 720px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <nav class="nav" aria-label="Dashboard views">
+        <button class="active" type="button" data-view="portfolio"><span>▦</span><span>Portfolio</span></button>
+        <button type="button" data-view="countries"><span>◎</span><span>Countries</span></button>
+        <button type="button" data-view="detail"><span>▤</span><span>Asset Detail</span></button>
+      </nav>
+
+      <div class="filters">
+        <div class="field">
+          <label>Country</label>
+          <div class="chip-row" role="group" aria-label="Country filter">
+            <button class="chip active" type="button" data-filter="country" data-value="all">All</button>
+            <button class="chip" type="button" data-filter="country" data-value="Singapore">Singapore</button>
+            <button class="chip" type="button" data-filter="country" data-value="Japan">Japan</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Asset type</label>
+          <div class="chip-row" role="group" aria-label="Asset type filter">
+            <button class="chip active" type="button" data-filter="type" data-value="all">All</button>
+            <button class="chip" type="button" data-filter="type" data-value="Retail">Retail</button>
+            <button class="chip" type="button" data-filter="type" data-value="Office">Office</button>
+            <button class="chip" type="button" data-filter="type" data-value="Logistics">Logistics</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-actions">
+        <a class="data-link" id="editDataLink" href="data/portfolio-data.csv" target="_blank" rel="noopener"><span>✎</span><span>Edit Data</span></a>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h1 id="title">Portfolio Pulse</h1>
+          <p class="subtitle" id="subtitle">One-glance view of asset heat, country mix, cost pressure, and energy intensity.</p>
+        </div>
+        <div class="period" aria-label="Period selector">
+          <button class="active" type="button">May</button>
+          <button type="button">Q2</button>
+          <button type="button">YTD</button>
+        </div>
+      </div>
+
+      <section class="view active" id="portfolio">
+        <div class="kpis" id="kpis"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Asset Heat Tiles</strong><br><span>Score = cost intensity + energy intensity + YoY pressure</span></div>
+            <span id="assetCount">6 assets</span>
+          </div>
+          <div class="asset-grid" id="assetTiles"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Cost Intensity vs Energy Intensity</strong></div>
+          </div>
+          <div class="bubble-wrap">
+            <div class="bubble-chart" id="bubbleChart"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="countries">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head">
+              <div><strong>Country Mix</strong><br><span>Area-weighted view by asset type</span></div>
+            </div>
+            <div class="country-stack" id="countryCards"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div><strong>Country Scoreboard</strong><br><span>Ranked by operating pressure</span></div>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Country</th>
+                    <th>Assets</th>
+                    <th>GFA</th>
+                    <th>Opex</th>
+                    <th>Energy</th>
+                    <th>Heat</th>
+                  </tr>
+                </thead>
+                <tbody id="countryRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Assets by Country and Type</strong><br><span>Short table for scan and comparison</span></div>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Country</th>
+                  <th>Type</th>
+                  <th>GFA / NLA</th>
+                  <th>Cost / sqm</th>
+                  <th>kWh / sqm</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="assetRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="detail">
+        <div class="detail">
+          <section class="panel profile">
+            <span class="pill warn" id="detailStatus">Watch</span>
+            <div>
+              <h2 id="detailName">VivoCity</h2>
+              <p class="subtitle" id="detailMeta">Singapore · Retail</p>
+            </div>
+            <div class="facts" id="detailFacts"></div>
+          </section>
+
+          <section class="panel bars">
+            <div class="panel-head">
+              <div><strong>12-Month Intensity Trend</strong><br><span>Combined cost and energy pressure index</span></div>
+            </div>
+            <div class="big-chart" id="detailChart"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Cost Breakdown</strong><br><span>Click bars to keep detail open</span></div>
+          </div>
+          <div class="cost-list" id="detailCosts"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const assets = [
+      { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, opex: 1.84, energy: 4.43, costSqm: 12.96, kwhSqm: 31.2, prevCostSqm: 12.25, prevKwhSqm: 29.4, score: 68, status: "warn", trend: [48,45,50,53,56,58,62,55,54,61,68,72], cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
+      { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, opex: 2.96, energy: 7.81, costSqm: 13.10, kwhSqm: 34.6, prevCostSqm: 11.95, prevKwhSqm: 30.8, score: 86, status: "hot", trend: [46,48,50,52,55,57,59,61,66,70,79,86], cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
+      { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, opex: 0.72, energy: 1.31, costSqm: 12.41, kwhSqm: 22.6, prevCostSqm: 11.32, prevKwhSqm: 20.1, score: 78, status: "hot", trend: [40,42,47,48,52,56,58,61,59,66,72,78], cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
+      { name: "mTower", label: "mTower", country: "Singapore", type: "Office", gfa: 96000, nla: 79000, opex: 0.91, energy: 1.68, costSqm: 11.52, kwhSqm: 21.3, prevCostSqm: 11.10, prevKwhSqm: 20.4, score: 63, status: "warn", trend: [42,41,43,45,47,49,50,52,54,57,60,63], cost: { energy: 35, cleaning: 17, security: 18, maintenance: 20, other: 10 } },
+      { name: "Japan Logistics A", label: "J-Log", country: "Japan", type: "Logistics", gfa: 138000, nla: 124000, opex: 1.08, energy: 3.09, costSqm: 8.71, kwhSqm: 24.9, prevCostSqm: 8.92, prevKwhSqm: 26.1, score: 42, status: "good", trend: [55,53,51,50,48,47,46,45,44,43,42,41], cost: { energy: 32, cleaning: 10, security: 11, maintenance: 29, other: 18 } },
+      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 105000, opex: 0.91, energy: 3.28, costSqm: 8.67, kwhSqm: 31.2, prevCostSqm: 8.30, prevKwhSqm: 30.1, score: 59, status: "warn", trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
+    ];
+
+    let selectedAsset = assets[0];
+    const filters = { country: "all", type: "all" };
+    const money = value => `S$${value.toFixed(2)}m`;
+    const area = value => `${Math.round(value / 1000)}k sqm`;
+    const statusText = status => status === "hot" ? "Hot" : status === "warn" ? "Watch" : "Stable";
+    const qs = selector => document.querySelector(selector);
+
+    function visibleAssets() {
+      const country = filters.country;
+      const type = filters.type;
+      return assets.filter(asset => (country === "all" || asset.country === country) && (type === "all" || asset.type === type));
+    }
+
+    function spark(values, status) {
+      const months = ["Dec", "Jan", "Feb", "Mar", "Apr", "May"];
+      return `
+        <div class="spark ${status}" aria-label="Last 6 months pressure trend">
+          ${values.slice(-6).map(value => `<i style="height:${value}%"></i>`).join("")}
+        </div>
+        <div class="spark-labels">${months.map(month => `<span>${month}</span>`).join("")}</div>
+      `;
+    }
+
+    function costLines(asset, idPrefix) {
+      const entries = [
+        ["energy", "Energy", "Tariff, usage, demand charge"],
+        ["cleaning", "Cleaning", "Routine, periodic, waste"],
+        ["security", "Security", "Manning and systems"],
+        ["maintenance", "Maintenance", "M&E, repairs, contracts"],
+        ["other", "Other", "Admin and recoverables"]
+      ];
+      return entries.map(([key, label, note], index) => `
+        <button class="cost-line" type="button" data-cost-line>
+          <div class="cost-label"><strong>${label}</strong><span>${asset.cost[key]}%</span></div>
+          <div class="meter ${key}"><i style="--w:${asset.cost[key]}%"></i></div>
+          <div class="popover">
+            <strong>${asset.name}: ${label}</strong>
+            <span>${note}</span>
+            <span>Approx. ${money(asset.opex * asset.cost[key] / 100)} this month</span>
+          </div>
+        </button>
+      `).join("");
+    }
+
+    function renderKpis(list) {
+      const totalGfa = list.reduce((sum, asset) => sum + asset.gfa, 0);
+      const totalNla = list.reduce((sum, asset) => sum + asset.nla, 0);
+      const totalOpex = list.reduce((sum, asset) => sum + asset.opex, 0);
+      const totalEnergy = list.reduce((sum, asset) => sum + asset.energy, 0);
+      const avgCost = totalOpex * 1000000 / Math.max(totalNla, 1);
+      const avgEnergy = totalEnergy * 1000000 / Math.max(totalNla, 1);
+      const hot = list.filter(asset => asset.status === "hot").length;
+      qs("#kpis").innerHTML = [
+        ["Assets", list.length, "filtered portfolio", "mix"],
+        ["GFA / NLA", `${area(totalGfa)} / ${area(totalNla)}`, `${Math.round(totalNla / totalGfa * 100)}% efficiency`, "area"],
+        ["Opex", money(totalOpex), "+4.8% MoM", "cost", "hot"],
+        ["Energy", `${totalEnergy.toFixed(1)} GWh`, "+6.1% MoM", "energy", "hot"],
+        ["Cost Intensity", `S$${avgCost.toFixed(2)}`, "per NLA sqm", "cost", "warn"],
+        ["Heat", hot, `${list.length - hot} not hot`, "heat"]
+      ].map(([label, value, delta, cardTone, deltaTone]) => `
+        <div class="card ${cardTone}">
+          <span class="label">${label}</span>
+          <strong class="value">${value}</strong>
+          <span class="delta ${deltaTone || ""}">${delta}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderTiles(list) {
+      qs("#assetCount").textContent = `${list.length} assets`;
+      qs("#assetTiles").innerHTML = list.map(asset => `
+        <article class="asset-tile ${asset.status} ${asset.name === selectedAsset.name ? "active" : ""}" data-asset="${asset.name}">
+          <div class="asset-top">
+            <div class="asset-name"><strong>${asset.name}</strong><span>${asset.country} · ${asset.type}</span></div>
+            <div class="score ${asset.status}">${asset.score}</div>
+          </div>
+          <div class="mini-row">
+            <div class="mini"><span>GFA</span><strong>${area(asset.gfa)}</strong></div>
+            <div class="mini"><span>NLA</span><strong>${area(asset.nla)}</strong></div>
+            <div class="mini"><span>NLA/GFA</span><strong>${Math.round(asset.nla / asset.gfa * 100)}%</strong></div>
+            <div class="mini"><span>Cost · kWh</span><strong>S$${asset.costSqm} · ${asset.kwhSqm}</strong></div>
+          </div>
+          ${spark(asset.trend, asset.status)}
+        </article>
+      `).join("");
+    }
+
+    function renderCostPanel(asset = selectedAsset) {
+      qs("#detailCosts").innerHTML = costLines(selectedAsset, "detail");
+    }
+
+    function renderBubbles(list) {
+      const minCost = 8;
+      const maxCost = 14;
+      const minEnergy = 20;
+      const maxEnergy = 36;
+      const statusColor = asset => asset.status === "hot" ? "#b83d34" : asset.status === "warn" ? "#bd7416" : "#11806a";
+      const xPos = value => Math.max(7, Math.min(93, ((value - minCost) / (maxCost - minCost)) * 86 + 7));
+      const yPos = value => Math.max(8, Math.min(92, ((value - minEnergy) / (maxEnergy - minEnergy)) * 84 + 8));
+      const ticks = `
+        <span class="axis-title y">Energy intensity (kWh / NLA sqm)</span>
+        <span class="axis-title x">Cost intensity (S$ / NLA sqm)</span>
+        ${[8,10,12,14].map(value => `<span class="tick x" style="left:${xPos(value)}%">${value}</span>`).join("")}
+        ${[20,24,28,32,36].map(value => `<span class="tick y" style="bottom:${yPos(value)}%">${value}</span>`).join("")}
+      `;
+      const plotted = list.map((asset, index) => ({
+        asset,
+        index,
+        x: xPos(asset.costSqm),
+        y: yPos(asset.kwhSqm),
+        gx: xPos(asset.prevCostSqm),
+        gy: yPos(asset.prevKwhSqm),
+        size: Math.max(44, Math.min(88, asset.gfa / 3200)),
+        color: statusColor(asset)
+      }));
+      const arrows = `
+        <svg class="arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            ${plotted.map(point => `
+              <marker id="arrow-${point.index}" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="${point.color}"></path>
+              </marker>
+            `).join("")}
+          </defs>
+          ${plotted.map(point => `
+            <line x1="${point.gx}" y1="${100 - point.gy}" x2="${point.x}" y2="${100 - point.y}" stroke="${point.color}" stroke-width=".55" stroke-linecap="round" opacity=".48" marker-end="url(#arrow-${point.index})"></line>
+          `).join("")}
+        </svg>
+      `;
+      const points = plotted.map(point => {
+        const asset = point.asset;
+        const x = xPos(asset.costSqm);
+        const y = yPos(asset.kwhSqm);
+        const gx = xPos(asset.prevCostSqm);
+        const gy = yPos(asset.prevKwhSqm);
+        const size = Math.max(44, Math.min(88, asset.gfa / 3200));
+        const color = statusColor(asset);
+        return `
+          <span class="ghost" style="--gx:${gx}%;--gy:${gy}%;--size:${size}px;--ghost:${color}" title="${asset.name} last FY"></span>
+          <button class="bubble ${asset.status}" type="button" data-asset="${asset.name}" style="--x:${x}%;--y:${y}%;--size:${size}px" title="${asset.name}: last FY S$${asset.prevCostSqm}/sqm, ${asset.prevKwhSqm} kWh/sqm → current S$${asset.costSqm}/sqm, ${asset.kwhSqm} kWh/sqm">${asset.label}</button>
+        `;
+      }).join("");
+      qs("#bubbleChart").innerHTML = ticks + arrows + points;
+    }
+
+    function groupedByCountry() {
+      return [...new Set(assets.map(asset => asset.country))].map(country => {
+        const list = assets.filter(asset => asset.country === country);
+        const totalArea = list.reduce((sum, asset) => sum + asset.gfa, 0);
+        return {
+          country,
+          list,
+          totalArea,
+          opex: list.reduce((sum, asset) => sum + asset.opex, 0),
+          energy: list.reduce((sum, asset) => sum + asset.energy, 0),
+          score: Math.round(list.reduce((sum, asset) => sum + asset.score, 0) / list.length)
+        };
+      });
+    }
+
+    function renderCountries() {
+      qs("#countryCards").innerHTML = groupedByCountry().map(group => {
+        const typeArea = type => group.list.filter(asset => asset.type === type).reduce((sum, asset) => sum + asset.gfa, 0);
+        const office = typeArea("Office") / group.totalArea * 100;
+        const retail = typeArea("Retail") / group.totalArea * 100;
+        const logistics = typeArea("Logistics") / group.totalArea * 100;
+        return `
+          <article class="country-card">
+            <div class="country-head">
+              <div><strong>${group.country}</strong><br><span>${group.list.length} assets · ${area(group.totalArea)}</span></div>
+              <span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span>
+            </div>
+            <div class="stack-bar">
+              <span class="office" style="width:${office}%"></span>
+              <span class="retail" style="width:${retail}%"></span>
+              <span class="logistics" style="width:${logistics}%"></span>
+            </div>
+            <div class="legend">
+              <span><i class="dot"></i>Office ${Math.round(office)}%</span>
+              <span><i class="dot retail"></i>Retail ${Math.round(retail)}%</span>
+              <span><i class="dot logistics"></i>Logistics ${Math.round(logistics)}%</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      qs("#countryRows").innerHTML = groupedByCountry().map(group => `
+        <tr>
+          <td><strong>${group.country}</strong></td>
+          <td>${group.list.length}</td>
+          <td>${area(group.totalArea)}</td>
+          <td>${money(group.opex)}</td>
+          <td>${group.energy.toFixed(1)} GWh</td>
+          <td><span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAssetRows(list) {
+      qs("#assetRows").innerHTML = list.map(asset => `
+        <tr>
+          <td><strong>${asset.name}</strong></td>
+          <td>${asset.country}</td>
+          <td>${asset.type}</td>
+          <td>${area(asset.gfa)} / ${area(asset.nla)}</td>
+          <td>S$${asset.costSqm}</td>
+          <td>${asset.kwhSqm}</td>
+          <td><span class="pill ${asset.status}">${statusText(asset.status)}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderDetail(asset = selectedAsset) {
+      selectedAsset = asset;
+      qs("#detailStatus").className = `pill ${asset.status}`;
+      qs("#detailStatus").textContent = statusText(asset.status);
+      qs("#detailName").textContent = asset.name;
+      qs("#detailMeta").textContent = `${asset.country} · ${asset.type}`;
+      qs("#detailFacts").innerHTML = `
+        <div><span>GFA</span><strong>${area(asset.gfa)}</strong></div>
+        <div><span>NLA</span><strong>${area(asset.nla)} (${Math.round(asset.nla / asset.gfa * 100)}%)</strong></div>
+        <div><span>Monthly opex</span><strong>${money(asset.opex)}</strong></div>
+        <div><span>Energy</span><strong>${asset.energy.toFixed(2)} GWh</strong></div>
+        <div><span>Cost / sqm</span><strong>S$${asset.costSqm}</strong></div>
+        <div><span>kWh / sqm</span><strong>${asset.kwhSqm}</strong></div>
+        <div><span>Heat score</span><strong>${asset.score}</strong></div>
+      `;
+      const months = ["Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May"];
+      qs("#detailChart").innerHTML = asset.trend.map((value, index) => `
+        <div class="month"><i style="--h:${value}%"></i><span>${months[index]}</span></div>
+      `).join("");
+      renderCostPanel(asset);
+      renderTiles(visibleAssets());
+    }
+
+    function renderAll() {
+      const list = visibleAssets();
+      if (!list.some(asset => asset.name === selectedAsset.name)) selectedAsset = list[0] || assets[0];
+      renderKpis(list);
+      renderTiles(list);
+      renderBubbles(list);
+      renderCostPanel(selectedAsset);
+      renderCountries();
+      renderAssetRows(list);
+      renderDetail(selectedAsset);
+    }
+
+    const titles = {
+      portfolio: ["Portfolio Pulse", "One-glance view of asset heat, country mix, cost pressure, and energy intensity."],
+      countries: ["Country and Type View", "Portfolio split by country and asset category, without people or actions."],
+      detail: ["Asset Detail", "One building at a time: trend, intensity, and clickable cost breakdown."]
+    };
+
+    document.querySelectorAll(".nav button").forEach(button => {
+      button.addEventListener("click", () => {
+        const view = button.dataset.view;
+        document.querySelectorAll(".nav button").forEach(item => item.classList.toggle("active", item === button));
+        document.querySelectorAll(".view").forEach(section => section.classList.toggle("active", section.id === view));
+        qs("#title").textContent = titles[view][0];
+        qs("#subtitle").textContent = titles[view][1];
+      });
+    });
+
+    document.querySelectorAll(".period button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".period button").forEach(item => item.classList.toggle("active", item === button));
+      });
+    });
+
+    document.addEventListener("click", event => {
+      const assetTrigger = event.target.closest("[data-asset]");
+      if (assetTrigger) {
+        const asset = assets.find(item => item.name === assetTrigger.dataset.asset);
+        if (asset) renderDetail(asset);
+      }
+
+      const costLine = event.target.closest("[data-cost-line]");
+      document.querySelectorAll("[data-cost-line]").forEach(line => {
+        if (line !== costLine) line.classList.remove("open");
+      });
+      if (costLine) costLine.classList.toggle("open");
+    });
+
+    document.querySelectorAll("[data-filter]").forEach(button => {
+      button.addEventListener("click", () => {
+        const group = button.dataset.filter;
+        filters[group] = button.dataset.value;
+        document.querySelectorAll(`[data-filter="${group}"]`).forEach(item => {
+          item.classList.toggle("active", item === button);
+        });
+        renderAll();
+      });
+    });
+
+    const editDataLink = qs("#editDataLink");
+    if (location.hostname.endsWith("github.io")) {
+      const owner = location.hostname.split(".")[0];
+      const repo = location.pathname.split("/").filter(Boolean)[0];
+      if (owner && repo) {
+        editDataLink.href = `https://github.com/${owner}/${repo}/edit/main/data/portfolio-data.csv`;
+      }
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
