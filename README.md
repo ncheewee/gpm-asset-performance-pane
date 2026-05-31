@@ -29,7 +29,7 @@ data/portfolio-data.xlsx
 data/portfolio-data.csv
 ```
 
-The app tries to load the Google Sheet as CSV at runtime, then falls back to embedded sample data if the Sheet is not published/reachable. For live UAT updates, publish the Google Sheet to the web or otherwise make the CSV endpoint readable by the dashboard.
+The app loads the Google Sheet at runtime through Google Visualization JSONP, then falls back to embedded sample data if the Sheet is not reachable. For live UAT updates, keep the Sheet set to "Anyone with the link can view".
 
 ## GitHub Pages
 
