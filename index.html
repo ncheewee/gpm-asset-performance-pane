@@ -797,7 +797,7 @@
       </div>
 
       <div class="data-actions">
-        <a class="data-link" id="editDataLink" href="data/portfolio-data.csv" target="_blank" rel="noopener"><span>✎</span><span>Edit Data</span></a>
+        <a class="data-link" id="editDataLink" href="data/portfolio-data.xlsx" target="_blank" rel="noopener"><span>✎</span><span>Edit Data</span></a>
       </div>
     </aside>
 
@@ -1227,7 +1227,7 @@
       const owner = location.hostname.split(".")[0];
       const repo = location.pathname.split("/").filter(Boolean)[0];
       if (owner && repo) {
-        editDataLink.href = `https://github.com/${owner}/${repo}/edit/main/data/portfolio-data.csv`;
+        editDataLink.href = `https://github.com/${owner}/${repo}/blob/main/data/portfolio-data.xlsx`;
       }
     }
 
