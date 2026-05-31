@@ -919,7 +919,8 @@
   </div>
 
   <script>
-    const assets = [
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Mwb7E5CXmoQtvB7yq4R7DmyH-O1qnxTb54NtVe9k34M/gviz/tq?tqx=out:csv&gid=0";
+    const fallbackAssets = [
       { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, opex: 1.84, energy: 4.43, costSqm: 12.96, kwhSqm: 31.2, prevCostSqm: 12.25, prevKwhSqm: 29.4, score: 68, status: "warn", trend: [48,45,50,53,56,58,62,55,54,61,68,72], cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
       { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, opex: 2.96, energy: 7.81, costSqm: 13.10, kwhSqm: 34.6, prevCostSqm: 11.95, prevKwhSqm: 30.8, score: 86, status: "hot", trend: [46,48,50,52,55,57,59,61,66,70,79,86], cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
       { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, opex: 0.72, energy: 1.31, costSqm: 12.41, kwhSqm: 22.6, prevCostSqm: 11.32, prevKwhSqm: 20.1, score: 78, status: "hot", trend: [40,42,47,48,52,56,58,61,59,66,72,78], cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
@@ -928,6 +929,7 @@
       { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 105000, opex: 0.91, energy: 3.28, costSqm: 8.67, kwhSqm: 31.2, prevCostSqm: 8.30, prevKwhSqm: 30.1, score: 59, status: "warn", trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
     ];
 
+    let assets = fallbackAssets;
     let selectedAsset = assets[0];
     const filters = { country: "all", type: "all" };
     const money = value => `S$${value.toFixed(2)}m`;
@@ -1175,6 +1177,95 @@
       renderDetail(selectedAsset);
     }
 
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let quoted = false;
+      for (let index = 0; index < text.length; index += 1) {
+        const char = text[index];
+        const next = text[index + 1];
+        if (char === '"' && quoted && next === '"') {
+          value += '"';
+          index += 1;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          row.push(value);
+          value = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") index += 1;
+          row.push(value);
+          if (row.some(cell => cell.trim())) rows.push(row);
+          row = [];
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+      row.push(value);
+      if (row.some(cell => cell.trim())) rows.push(row);
+      return rows;
+    }
+
+    function numberCell(row, key, fallback = 0) {
+      const value = Number(row[key]);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function statusFromScore(score) {
+      if (score >= 75) return "hot";
+      if (score >= 55) return "warn";
+      return "good";
+    }
+
+    function assetsFromCsv(text) {
+      const rows = parseCsv(text);
+      const headers = rows.shift().map(header => header.trim());
+      return rows.map(cells => {
+        const row = Object.fromEntries(headers.map((header, index) => [header, (cells[index] || "").trim()]));
+        const score = numberCell(row, "score", 0);
+        return {
+          name: row.name,
+          label: row.label || row.name,
+          country: row.country,
+          type: row.type,
+          gfa: numberCell(row, "gfa"),
+          nla: numberCell(row, "nla"),
+          opex: numberCell(row, "opex_m"),
+          energy: numberCell(row, "energy_gwh"),
+          costSqm: numberCell(row, "cost_sqm"),
+          kwhSqm: numberCell(row, "kwh_sqm"),
+          prevCostSqm: numberCell(row, "prev_cost_sqm"),
+          prevKwhSqm: numberCell(row, "prev_kwh_sqm"),
+          score,
+          status: row.status || statusFromScore(score),
+          trend: ["jun","jul","aug","sep","oct","nov","dec","jan","feb","mar","apr","may"].map(month => numberCell(row, `trend_${month}`)),
+          cost: {
+            energy: numberCell(row, "cost_energy_pct"),
+            cleaning: numberCell(row, "cost_cleaning_pct"),
+            security: numberCell(row, "cost_security_pct"),
+            maintenance: numberCell(row, "cost_maintenance_pct"),
+            other: numberCell(row, "cost_other_pct")
+          }
+        };
+      }).filter(asset => asset.name && asset.country && asset.type);
+    }
+
+    async function loadSheetData() {
+      try {
+        const response = await fetch(`${SHEET_CSV_URL}&cachebust=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Sheet returned ${response.status}`);
+        const loadedAssets = assetsFromCsv(await response.text());
+        if (!loadedAssets.length) throw new Error("Sheet had no asset rows");
+        assets = loadedAssets;
+        selectedAsset = assets.find(asset => asset.name === selectedAsset.name) || assets[0];
+        renderAll();
+      } catch (error) {
+        console.info("Using embedded fallback data because Google Sheet data could not be loaded.", error);
+      }
+    }
+
     const titles = {
       portfolio: ["Portfolio Pulse", "One-glance view of asset heat, country mix, cost pressure, and energy intensity."],
       countries: ["Country and Type View", "Portfolio split by country and asset category, without people or actions."],
@@ -1223,6 +1314,7 @@
     });
 
     renderAll();
+    loadSheetData();
   </script>
 </body>
 </html>

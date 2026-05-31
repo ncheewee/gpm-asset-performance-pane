@@ -29,7 +29,7 @@ data/portfolio-data.xlsx
 data/portfolio-data.csv
 ```
 
-For now, the app uses embedded sample data for speed and reliability. The Google Sheet, workbook, and CSV mirror the same structure so the Sheet can become the source of truth in the next pass.
+The app tries to load the Google Sheet as CSV at runtime, then falls back to embedded sample data if the Sheet is not published/reachable. For live UAT updates, publish the Google Sheet to the web or otherwise make the CSV endpoint readable by the dashboard.
 
 ## GitHub Pages
 
