@@ -20,6 +20,15 @@
       --country-singapore: #2f68b1;
       --country-japan: #11806a;
       --country-other: #7c5dbb;
+      --country-singapore-1: #24548f;
+      --country-singapore-2: #3d7bc2;
+      --country-singapore-3: #86b5e4;
+      --country-japan-1: #0d6958;
+      --country-japan-2: #16947c;
+      --country-japan-3: #7dcebc;
+      --country-other-1: #64499d;
+      --country-other-2: #8769c9;
+      --country-other-3: #c2b0ea;
       --pulse-bg: #f4e5c7;
       --pulse-bg-2: #fff9ef;
       --green-bg: #e8f5ef;
@@ -329,6 +338,24 @@
     .japan { --country: var(--country-japan); }
     .other-country { --country: var(--country-other); }
 
+    .singapore {
+      --country-1: var(--country-singapore-1);
+      --country-2: var(--country-singapore-2);
+      --country-3: var(--country-singapore-3);
+    }
+
+    .japan {
+      --country-1: var(--country-japan-1);
+      --country-2: var(--country-japan-2);
+      --country-3: var(--country-japan-3);
+    }
+
+    .other-country {
+      --country-1: var(--country-other-1);
+      --country-2: var(--country-other-2);
+      --country-3: var(--country-other-3);
+    }
+
     .asset-top {
       display: flex;
       justify-content: space-between;
@@ -451,9 +478,9 @@
     }
 
     .stack-bar span { display: block; }
-    .stack-bar .office { background: var(--blue); }
-    .stack-bar .retail { background: var(--orange); }
-    .stack-bar .logistics { background: var(--green); }
+    .stack-bar .office { background: var(--country-1); }
+    .stack-bar .retail { background: var(--country-2); }
+    .stack-bar .logistics { background: var(--country-3); }
 
     .legend {
       display: flex;
@@ -469,11 +496,11 @@
       border-radius: 50%;
       display: inline-block;
       margin-right: 5px;
-      background: var(--blue);
+      background: var(--country-1);
     }
 
-    .dot.retail { background: var(--orange); }
-    .dot.logistics { background: var(--green); }
+    .dot.retail { background: var(--country-2); }
+    .dot.logistics { background: var(--country-3); }
 
     .bubble-wrap {
       padding: 14px;
@@ -540,7 +567,7 @@
       display: grid;
       place-items: center;
       color: white;
-      background: var(--green);
+      background: var(--country);
       transform: translate(-50%, 50%);
       font-size: 11px;
       font-weight: 800;
@@ -550,8 +577,9 @@
       text-shadow: 0 1px 3px rgba(0,0,0,.65), 0 0 8px rgba(0,0,0,.35);
     }
 
-    .bubble.warn { background: var(--orange); }
-    .bubble.hot { background: var(--red); }
+    .bubble.singapore { --country: var(--country-singapore); }
+    .bubble.japan { --country: var(--country-japan); }
+    .bubble.other-country { --country: var(--country-other); }
 
     .ghost {
       position: absolute;
@@ -691,6 +719,10 @@
 
     .pill.warn { background: var(--orange-bg); color: var(--orange); }
     .pill.hot { background: var(--red-bg); color: var(--red); }
+    .pill.country-score {
+      background: color-mix(in srgb, var(--country) 14%, white);
+      color: var(--country);
+    }
 
     .detail {
       display: grid;
@@ -751,24 +783,23 @@
 
     .asset-pill {
       min-height: 36px;
-      border: 1px solid var(--line);
-      border-left: 5px solid var(--country);
+      border: 0;
       border-radius: 999px;
-      padding: 0 12px 0 10px;
-      background: white;
-      color: var(--ink);
+      padding: 0 13px;
+      background: var(--country);
+      color: white;
       cursor: pointer;
       font-weight: 800;
-      box-shadow: 0 8px 18px rgba(24, 35, 47, .06);
+      opacity: .72;
+      box-shadow: none;
     }
 
     .asset-pill.singapore { --country: var(--country-singapore); }
     .asset-pill.japan { --country: var(--country-japan); }
     .asset-pill.other-country { --country: var(--country-other); }
     .asset-pill.active {
-      color: white;
-      background: var(--country);
-      border-color: var(--country);
+      opacity: 1;
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--country) 22%, transparent);
     }
 
     .bars {
@@ -1016,6 +1047,10 @@
     const countryKey = country => String(country || "").toLowerCase().replace(/[^a-z0-9]+/g, "-") || "other-country";
     const countryClass = country => ["singapore", "japan"].includes(countryKey(country)) ? countryKey(country) : "other-country";
     const countryRank = country => ({ singapore: 1, japan: 2 }[countryKey(country)] || 99);
+    const countryColor = country => ({
+      singapore: "#2f68b1",
+      japan: "#11806a"
+    }[countryKey(country)] || "#7c5dbb");
 
     function visibleAssets() {
       const country = filters.country;
@@ -1117,7 +1152,6 @@
       const maxCost = 14;
       const minEnergy = 20;
       const maxEnergy = 36;
-      const statusColor = asset => asset.status === "hot" ? "#b83d34" : asset.status === "warn" ? "#bd7416" : "#11806a";
       const xPos = value => Math.max(7, Math.min(93, ((value - minCost) / (maxCost - minCost)) * 86 + 7));
       const yPos = value => Math.max(8, Math.min(92, ((value - minEnergy) / (maxEnergy - minEnergy)) * 84 + 8));
       const ticks = `
@@ -1134,7 +1168,7 @@
         gx: xPos(asset.prevCostSqm),
         gy: yPos(asset.prevKwhSqm),
         size: Math.max(44, Math.min(88, asset.gfa / 3200)),
-        color: statusColor(asset)
+        color: countryColor(asset.country)
       }));
       const arrows = `
         <svg class="arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -1157,10 +1191,10 @@
         const gx = xPos(asset.prevCostSqm);
         const gy = yPos(asset.prevKwhSqm);
         const size = Math.max(44, Math.min(88, asset.gfa / 3200));
-        const color = statusColor(asset);
+        const color = countryColor(asset.country);
         return `
           <span class="ghost" style="--gx:${gx}%;--gy:${gy}%;--size:${size}px;--ghost:${color}" title="${asset.name} last FY"></span>
-          <button class="bubble ${asset.status}" type="button" data-asset="${asset.name}" style="--x:${x}%;--y:${y}%;--size:${size}px" title="${asset.name}: last FY S$${asset.prevCostSqm}/sqm, ${asset.prevKwhSqm} kWh/sqm → current S$${asset.costSqm}/sqm, ${asset.kwhSqm} kWh/sqm">${asset.label}</button>
+          <button class="bubble ${countryClass(asset.country)}" type="button" data-asset="${asset.name}" style="--x:${x}%;--y:${y}%;--size:${size}px" title="${asset.name}: last FY S$${asset.prevCostSqm}/sqm, ${asset.prevKwhSqm} kWh/sqm → current S$${asset.costSqm}/sqm, ${asset.kwhSqm} kWh/sqm">${asset.label}</button>
         `;
       }).join("");
       qs("#bubbleChart").innerHTML = ticks + arrows + points;
@@ -1191,7 +1225,7 @@
           <article class="country-card ${countryClass(group.country)}">
             <div class="country-head">
               <div><strong><i class="country-dot"></i>${group.country}</strong><br><span>${group.list.length} assets · ${area(group.totalArea)}</span></div>
-              <span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span>
+              <span class="pill country-score">${group.score}</span>
             </div>
             <div class="stack-bar">
               <span class="office" style="width:${office}%"></span>
@@ -1214,7 +1248,7 @@
           <td>${area(group.totalArea)}</td>
           <td>${money(group.opex)}</td>
           <td>${group.energy.toFixed(1)} GWh</td>
-          <td><span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span></td>
+          <td><span class="pill country-score ${countryClass(group.country)}">${group.score}</span></td>
         </tr>
       `).join("");
     }
