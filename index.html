@@ -244,18 +244,20 @@
       display: grid;
       align-content: space-between;
       gap: 10px;
-      border-top: 5px solid var(--blue);
+      border: 0;
+      color: #102030;
+      box-shadow: 0 14px 30px rgba(24, 35, 47, .1);
     }
 
-    .card.area { border-top-color: var(--blue); }
-    .card.cost { border-top-color: var(--red); }
-    .card.energy { border-top-color: var(--orange); }
-    .card.mix { border-top-color: var(--green); }
-    .card.heat { border-top-color: var(--red); }
-    .card.trend { border-top-color: var(--orange); }
+    .card.area { background: linear-gradient(135deg, #dcecff, #f8fbff); }
+    .card.cost { background: linear-gradient(135deg, #ffe3de, #fff8f6); }
+    .card.energy { background: linear-gradient(135deg, #ffe9be, #fffaf0); }
+    .card.mix { background: linear-gradient(135deg, #d8f3ea, #f4fcf9); }
+    .card.heat { background: linear-gradient(135deg, #f6d8d2, #fff8f7); }
+    .card.trend { background: linear-gradient(135deg, #efe5ff, #fbf8ff); }
 
     .label {
-      color: var(--muted);
+      color: rgba(22, 32, 42, .68);
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: .06em;
@@ -269,7 +271,7 @@
     }
 
     .delta {
-      color: var(--muted);
+      color: rgba(22, 32, 42, .68);
       font-size: 12px;
     }
 
@@ -313,13 +315,15 @@
       padding: 13px;
       display: grid;
       gap: 10px;
-      border-left: 5px solid var(--green);
+      border-left: 6px solid var(--country);
+      border-top: 4px solid var(--country-soft);
       cursor: pointer;
     }
 
-    .asset-tile.warn { border-left-color: var(--orange); }
-    .asset-tile.hot { border-left-color: var(--red); }
-    .asset-tile.active { outline: 3px solid rgba(47, 104, 177, .2); }
+    .asset-tile.singapore { --country: var(--blue); --country-soft: rgba(47, 104, 177, .22); }
+    .asset-tile.japan { --country: var(--green); --country-soft: rgba(17, 128, 106, .22); }
+    .asset-tile.other-country { --country: #7c5dbb; --country-soft: rgba(124, 93, 187, .22); }
+    .asset-tile.active { outline: 3px solid color-mix(in srgb, var(--country) 24%, transparent); }
 
     .asset-top {
       display: flex;
@@ -330,6 +334,16 @@
 
     .asset-name strong { display: block; font-size: 15px; }
     .asset-name span { color: var(--muted); font-size: 12px; }
+
+    .country-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      background: var(--country);
+      vertical-align: 1px;
+    }
 
     .score {
       min-width: 42px;
@@ -702,6 +716,52 @@
 
     .facts span { color: var(--muted); }
 
+    .asset-picker {
+      padding: 12px 14px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .asset-picker-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .asset-picker-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .asset-pill {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--country);
+      border-radius: 999px;
+      padding: 0 12px 0 10px;
+      background: white;
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(24, 35, 47, .06);
+    }
+
+    .asset-pill.singapore { --country: var(--blue); }
+    .asset-pill.japan { --country: var(--green); }
+    .asset-pill.other-country { --country: #7c5dbb; }
+    .asset-pill.active {
+      color: white;
+      background: var(--country);
+      border-color: var(--country);
+    }
+
     .bars {
       padding: 18px;
       display: grid;
@@ -890,6 +950,14 @@
       </section>
 
       <section class="view" id="detail">
+        <section class="panel asset-picker">
+          <div class="asset-picker-head">
+            <span>Asset selector</span>
+            <span id="detailAssetCount">6 assets</span>
+          </div>
+          <div class="asset-picker-list" id="detailAssetPicker"></div>
+        </section>
+
         <div class="detail">
           <section class="panel profile">
             <span class="pill warn" id="detailStatus">Watch</span>
@@ -936,6 +1004,8 @@
     const area = value => `${Math.round(value / 1000)}k sqm`;
     const statusText = status => status === "hot" ? "Hot" : status === "warn" ? "Watch" : "Stable";
     const qs = selector => document.querySelector(selector);
+    const countryKey = country => String(country || "").toLowerCase().replace(/[^a-z0-9]+/g, "-") || "other-country";
+    const countryClass = country => ["singapore", "japan"].includes(countryKey(country)) ? countryKey(country) : "other-country";
 
     function visibleAssets() {
       const country = filters.country;
@@ -1001,9 +1071,9 @@
     function renderTiles(list) {
       qs("#assetCount").textContent = `${list.length} assets`;
       qs("#assetTiles").innerHTML = list.map(asset => `
-        <article class="asset-tile ${asset.status} ${asset.name === selectedAsset.name ? "active" : ""}" data-asset="${asset.name}">
+        <article class="asset-tile ${asset.status} ${countryClass(asset.country)} ${asset.name === selectedAsset.name ? "active" : ""}" data-asset="${asset.name}">
           <div class="asset-top">
-            <div class="asset-name"><strong>${asset.name}</strong><span>${asset.country} · ${asset.type}</span></div>
+            <div class="asset-name"><strong>${asset.name}</strong><span><i class="country-dot"></i>${asset.country} · ${asset.type}</span></div>
             <div class="score ${asset.status}">${asset.score}</div>
           </div>
           <div class="mini-row">
@@ -1014,6 +1084,15 @@
           </div>
           ${spark(asset.trend, asset.status)}
         </article>
+      `).join("");
+    }
+
+    function renderDetailPicker(list) {
+      qs("#detailAssetCount").textContent = `${list.length} assets`;
+      qs("#detailAssetPicker").innerHTML = list.map(asset => `
+        <button class="asset-pill ${countryClass(asset.country)} ${asset.name === selectedAsset.name ? "active" : ""}" type="button" data-asset="${asset.name}">
+          ${asset.label || asset.name}
+        </button>
       `).join("");
     }
 
@@ -1163,6 +1242,7 @@
       `).join("");
       renderCostPanel(asset);
       renderTiles(visibleAssets());
+      renderDetailPicker(visibleAssets());
     }
 
     function renderAll() {
@@ -1171,6 +1251,7 @@
       renderKpis(list);
       renderTiles(list);
       renderBubbles(list);
+      renderDetailPicker(list);
       renderCostPanel(selectedAsset);
       renderCountries();
       renderAssetRows(list);
