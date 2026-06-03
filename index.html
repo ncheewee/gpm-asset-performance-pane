@@ -17,6 +17,11 @@
       --blue: #2f68b1;
       --orange: #bd7416;
       --red: #b83d34;
+      --country-singapore: #2f68b1;
+      --country-japan: #11806a;
+      --country-other: #7c5dbb;
+      --pulse-bg: #f4e5c7;
+      --pulse-bg-2: #fff9ef;
       --green-bg: #e8f5ef;
       --orange-bg: #fff2d9;
       --red-bg: #fae6e2;
@@ -249,12 +254,7 @@
       box-shadow: 0 14px 30px rgba(24, 35, 47, .1);
     }
 
-    .card.area { background: linear-gradient(135deg, #dcecff, #f8fbff); }
-    .card.cost { background: linear-gradient(135deg, #ffe3de, #fff8f6); }
-    .card.energy { background: linear-gradient(135deg, #ffe9be, #fffaf0); }
-    .card.mix { background: linear-gradient(135deg, #d8f3ea, #f4fcf9); }
-    .card.heat { background: linear-gradient(135deg, #f6d8d2, #fff8f7); }
-    .card.trend { background: linear-gradient(135deg, #efe5ff, #fbf8ff); }
+    .card { background: linear-gradient(135deg, var(--pulse-bg), var(--pulse-bg-2)); }
 
     .label {
       color: rgba(22, 32, 42, .68);
@@ -320,10 +320,14 @@
       cursor: pointer;
     }
 
-    .asset-tile.singapore { --country: var(--blue); --country-soft: rgba(47, 104, 177, .22); }
-    .asset-tile.japan { --country: var(--green); --country-soft: rgba(17, 128, 106, .22); }
-    .asset-tile.other-country { --country: #7c5dbb; --country-soft: rgba(124, 93, 187, .22); }
+    .asset-tile.singapore { --country: var(--country-singapore); --country-soft: rgba(47, 104, 177, .22); }
+    .asset-tile.japan { --country: var(--country-japan); --country-soft: rgba(17, 128, 106, .22); }
+    .asset-tile.other-country { --country: var(--country-other); --country-soft: rgba(124, 93, 187, .22); }
     .asset-tile.active { outline: 3px solid color-mix(in srgb, var(--country) 24%, transparent); }
+
+    .singapore { --country: var(--country-singapore); }
+    .japan { --country: var(--country-japan); }
+    .other-country { --country: var(--country-other); }
 
     .asset-top {
       display: flex;
@@ -421,7 +425,12 @@
       padding: 14px;
       display: grid;
       gap: 12px;
+      border-left: 6px solid var(--country);
     }
+
+    .country-card.singapore { --country: var(--country-singapore); }
+    .country-card.japan { --country: var(--country-japan); }
+    .country-card.other-country { --country: var(--country-other); }
 
     .country-head {
       display: flex;
@@ -753,9 +762,9 @@
       box-shadow: 0 8px 18px rgba(24, 35, 47, .06);
     }
 
-    .asset-pill.singapore { --country: var(--blue); }
-    .asset-pill.japan { --country: var(--green); }
-    .asset-pill.other-country { --country: #7c5dbb; }
+    .asset-pill.singapore { --country: var(--country-singapore); }
+    .asset-pill.japan { --country: var(--country-japan); }
+    .asset-pill.other-country { --country: var(--country-other); }
     .asset-pill.active {
       color: white;
       background: var(--country);
@@ -1006,11 +1015,14 @@
     const qs = selector => document.querySelector(selector);
     const countryKey = country => String(country || "").toLowerCase().replace(/[^a-z0-9]+/g, "-") || "other-country";
     const countryClass = country => ["singapore", "japan"].includes(countryKey(country)) ? countryKey(country) : "other-country";
+    const countryRank = country => ({ singapore: 1, japan: 2 }[countryKey(country)] || 99);
 
     function visibleAssets() {
       const country = filters.country;
       const type = filters.type;
-      return assets.filter(asset => (country === "all" || asset.country === country) && (type === "all" || asset.type === type));
+      return assets
+        .filter(asset => (country === "all" || asset.country === country) && (type === "all" || asset.type === type))
+        .sort((a, b) => countryRank(a.country) - countryRank(b.country) || a.name.localeCompare(b.name));
     }
 
     function spark(values, status) {
@@ -1176,9 +1188,9 @@
         const retail = typeArea("Retail") / group.totalArea * 100;
         const logistics = typeArea("Logistics") / group.totalArea * 100;
         return `
-          <article class="country-card">
+          <article class="country-card ${countryClass(group.country)}">
             <div class="country-head">
-              <div><strong>${group.country}</strong><br><span>${group.list.length} assets · ${area(group.totalArea)}</span></div>
+              <div><strong><i class="country-dot"></i>${group.country}</strong><br><span>${group.list.length} assets · ${area(group.totalArea)}</span></div>
               <span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span>
             </div>
             <div class="stack-bar">
@@ -1197,7 +1209,7 @@
 
       qs("#countryRows").innerHTML = groupedByCountry().map(group => `
         <tr>
-          <td><strong>${group.country}</strong></td>
+          <td><strong class="${countryClass(group.country)}"><i class="country-dot"></i>${group.country}</strong></td>
           <td>${group.list.length}</td>
           <td>${area(group.totalArea)}</td>
           <td>${money(group.opex)}</td>
