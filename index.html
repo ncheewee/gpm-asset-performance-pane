@@ -315,6 +315,35 @@
     .asset-grid {
       padding: 14px;
       display: grid;
+      gap: 16px;
+    }
+
+    .asset-country-section {
+      display: grid;
+      gap: 10px;
+    }
+
+    .asset-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .asset-section-head strong {
+      color: var(--ink);
+      font-size: 13px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .asset-section-grid {
+      display: grid;
       grid-template-columns: repeat(3, minmax(180px, 1fr));
       gap: 12px;
     }
@@ -377,9 +406,9 @@
     }
 
     .score {
-      min-width: 42px;
-      height: 42px;
-      border-radius: 50%;
+      min-width: 56px;
+      height: 32px;
+      border-radius: 999px;
       display: grid;
       place-items: center;
       color: white;
@@ -719,11 +748,6 @@
 
     .pill.warn { background: var(--orange-bg); color: var(--orange); }
     .pill.hot { background: var(--red-bg); color: var(--red); }
-    .pill.country-score {
-      background: color-mix(in srgb, var(--country) 14%, white);
-      color: var(--country);
-    }
-
     .detail {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -838,6 +862,18 @@
       background: linear-gradient(180deg, var(--blue), var(--green));
     }
 
+    .big-chart.singapore .month i {
+      background: linear-gradient(180deg, var(--country-singapore-3), var(--country-singapore-1));
+    }
+
+    .big-chart.japan .month i {
+      background: linear-gradient(180deg, var(--country-japan-3), var(--country-japan-1));
+    }
+
+    .big-chart.other-country .month i {
+      background: linear-gradient(180deg, var(--country-other-3), var(--country-other-1));
+    }
+
     @media (max-width: 1120px) {
       .side { position: static; grid-template-columns: minmax(340px, 1fr) auto; align-items: end; padding-bottom: 0; }
       .nav { display: grid; grid-template-columns: repeat(3, minmax(130px, 1fr)); }
@@ -861,6 +897,7 @@
       .value { font-size: 18px; }
       .label, .delta { font-size: 10px; }
       .asset-grid { display: grid; grid-template-columns: 1fr; }
+      .asset-section-grid { display: grid; grid-template-columns: 1fr; }
       .bubble-chart { height: 300px; }
       .table-wrap { overflow-x: auto; }
       .table { min-width: 720px; }
@@ -1117,21 +1154,35 @@
 
     function renderTiles(list) {
       qs("#assetCount").textContent = `${list.length} assets`;
-      qs("#assetTiles").innerHTML = list.map(asset => `
-        <article class="asset-tile ${asset.status} ${countryClass(asset.country)} ${asset.name === selectedAsset.name ? "active" : ""}" data-asset="${asset.name}">
-          <div class="asset-top">
-            <div class="asset-name"><strong>${asset.name}</strong><span><i class="country-dot"></i>${asset.country} · ${asset.type}</span></div>
-            <div class="score ${asset.status}">${asset.score}</div>
-          </div>
-          <div class="mini-row">
-            <div class="mini"><span>GFA</span><strong>${area(asset.gfa)}</strong></div>
-            <div class="mini"><span>NLA</span><strong>${area(asset.nla)}</strong></div>
-            <div class="mini"><span>NLA/GFA</span><strong>${Math.round(asset.nla / asset.gfa * 100)}%</strong></div>
-            <div class="mini"><span>Cost · kWh</span><strong>S$${asset.costSqm} · ${asset.kwhSqm}</strong></div>
-          </div>
-          ${spark(asset.trend, asset.status)}
-        </article>
-      `).join("");
+      const countries = [...new Set(list.map(asset => asset.country))];
+      qs("#assetTiles").innerHTML = countries.map(country => {
+        const countryAssets = list.filter(asset => asset.country === country);
+        return `
+          <section class="asset-country-section ${countryClass(country)}">
+            <div class="asset-section-head">
+              <strong><i class="country-dot"></i>${country}</strong>
+              <span>${countryAssets.length} assets</span>
+            </div>
+            <div class="asset-section-grid">
+              ${countryAssets.map(asset => `
+                <article class="asset-tile ${asset.status} ${countryClass(asset.country)} ${asset.name === selectedAsset.name ? "active" : ""}" data-asset="${asset.name}">
+                  <div class="asset-top">
+                    <div class="asset-name"><strong>${asset.name}</strong><span>${asset.type}</span></div>
+                    <div class="score ${asset.status}">${asset.score}</div>
+                  </div>
+                  <div class="mini-row">
+                    <div class="mini"><span>GFA</span><strong>${area(asset.gfa)}</strong></div>
+                    <div class="mini"><span>NLA</span><strong>${area(asset.nla)}</strong></div>
+                    <div class="mini"><span>NLA/GFA</span><strong>${Math.round(asset.nla / asset.gfa * 100)}%</strong></div>
+                    <div class="mini"><span>Cost · kWh</span><strong>S$${asset.costSqm} · ${asset.kwhSqm}</strong></div>
+                  </div>
+                  ${spark(asset.trend, asset.status)}
+                </article>
+              `).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
     }
 
     function renderDetailPicker(list) {
@@ -1225,7 +1276,7 @@
           <article class="country-card ${countryClass(group.country)}">
             <div class="country-head">
               <div><strong><i class="country-dot"></i>${group.country}</strong><br><span>${group.list.length} assets · ${area(group.totalArea)}</span></div>
-              <span class="pill country-score">${group.score}</span>
+              <span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span>
             </div>
             <div class="stack-bar">
               <span class="office" style="width:${office}%"></span>
@@ -1248,7 +1299,7 @@
           <td>${area(group.totalArea)}</td>
           <td>${money(group.opex)}</td>
           <td>${group.energy.toFixed(1)} GWh</td>
-          <td><span class="pill country-score ${countryClass(group.country)}">${group.score}</span></td>
+          <td><span class="pill ${group.score > 70 ? "hot" : group.score > 55 ? "warn" : ""}">${group.score}</span></td>
         </tr>
       `).join("");
     }
@@ -1283,6 +1334,7 @@
         <div><span>Heat score</span><strong>${asset.score}</strong></div>
       `;
       const months = ["Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May"];
+      qs("#detailChart").className = `big-chart ${countryClass(asset.country)}`;
       qs("#detailChart").innerHTML = asset.trend.map((value, index) => `
         <div class="month"><i style="--h:${value}%"></i><span>${months[index]}</span></div>
       `).join("");
