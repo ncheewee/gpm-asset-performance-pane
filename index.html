@@ -1071,7 +1071,7 @@
       { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, opex: 0.72, energy: 1.31, costSqm: 12.41, kwhSqm: 22.6, prevCostSqm: 11.32, prevKwhSqm: 20.1, score: 78, status: "hot", trend: [40,42,47,48,52,56,58,61,59,66,72,78], cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
       { name: "mTower", label: "mTower", country: "Singapore", type: "Office", gfa: 96000, nla: 79000, opex: 0.91, energy: 1.68, costSqm: 11.52, kwhSqm: 21.3, prevCostSqm: 11.10, prevKwhSqm: 20.4, score: 63, status: "warn", trend: [42,41,43,45,47,49,50,52,54,57,60,63], cost: { energy: 35, cleaning: 17, security: 18, maintenance: 20, other: 10 } },
       { name: "Japan Logistics A", label: "J-Log", country: "Japan", type: "Logistics", gfa: 138000, nla: 124000, opex: 1.08, energy: 3.09, costSqm: 8.71, kwhSqm: 24.9, prevCostSqm: 8.92, prevKwhSqm: 26.1, score: 42, status: "good", trend: [55,53,51,50,48,47,46,45,44,43,42,41], cost: { energy: 32, cleaning: 10, security: 11, maintenance: 29, other: 18 } },
-      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 105000, opex: 0.91, energy: 3.28, costSqm: 8.67, kwhSqm: 31.2, prevCostSqm: 8.30, prevKwhSqm: 30.1, score: 59, status: "warn", trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
+      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 107000, opex: 0.91, energy: 3.28, costSqm: 8.67, kwhSqm: 31.2, prevCostSqm: 8.30, prevKwhSqm: 30.1, score: 59, status: "warn", trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
     ];
 
     let assets = fallbackAssets;
@@ -1221,17 +1221,10 @@
         size: Math.max(44, Math.min(88, asset.gfa / 3200)),
         color: countryColor(asset.country)
       }));
-      const arrows = `
+      const movementLines = `
         <svg class="arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            ${plotted.map(point => `
-              <marker id="arrow-${point.index}" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-                <path d="M0,0 L5,2.5 L0,5 Z" fill="${point.color}"></path>
-              </marker>
-            `).join("")}
-          </defs>
           ${plotted.map(point => `
-            <line x1="${point.gx}" y1="${100 - point.gy}" x2="${point.x}" y2="${100 - point.y}" stroke="${point.color}" stroke-width=".55" stroke-linecap="round" opacity=".48" marker-end="url(#arrow-${point.index})"></line>
+            <line x1="${point.gx}" y1="${100 - point.gy}" x2="${point.x}" y2="${100 - point.y}" stroke="${point.color}" stroke-width=".32" stroke-linecap="round" opacity=".36"></line>
           `).join("")}
         </svg>
       `;
@@ -1248,7 +1241,7 @@
           <button class="bubble ${countryClass(asset.country)}" type="button" data-asset="${asset.name}" style="--x:${x}%;--y:${y}%;--size:${size}px" title="${asset.name}: last FY S$${asset.prevCostSqm}/sqm, ${asset.prevKwhSqm} kWh/sqm → current S$${asset.costSqm}/sqm, ${asset.kwhSqm} kWh/sqm">${asset.label}</button>
         `;
       }).join("");
-      qs("#bubbleChart").innerHTML = ticks + arrows + points;
+      qs("#bubbleChart").innerHTML = ticks + movementLines + points;
     }
 
     function groupedByCountry() {
@@ -1495,6 +1488,9 @@
         renderAll();
       } catch (error) {
         console.info("Using embedded fallback data because Google Sheet data could not be loaded.", error);
+        assets = fallbackAssets;
+        selectedAsset = assets.find(asset => asset.name === selectedAsset.name) || assets[0];
+        renderAll();
       } finally {
         delete window[callbackName];
         document.querySelectorAll(`script[src*="${callbackName}"]`).forEach(script => script.remove());
@@ -1548,7 +1544,6 @@
       });
     });
 
-    renderAll();
     loadSheetData();
   </script>
 </body>
