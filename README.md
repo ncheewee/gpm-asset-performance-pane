@@ -33,7 +33,7 @@ The app loads the Google Sheet at runtime through Google Visualization JSONP, th
 
 Use `Portfolio Data` for the current dashboard output table. Use `Monthly Inputs` for property-by-month data entry: each asset has Jun-May rows, with yellow cells for editable monthly inputs and blue cells for reference/calculated fields.
 
-`data-entry.html` is the controlled UAT input mockup. Normal users can edit only the current month. Monthly inputs are raw cost categories in S$k plus energy kWh, water m3, and notes; totals, percentages, intensities, and pressure index are calculated. Admin mode (`GPM2026`) unlocks historical months and slower-changing asset basics such as GFA/NLA.
+`data-entry.html` is the controlled UAT input mockup. Normal users can edit only the current month. Monthly inputs are actual cost amounts by category, energy kWh, water m3, and notes; totals, percentages, intensities, and pressure index are calculated. Admin mode (`GPM2026`) unlocks historical months plus slower-changing asset basics, cost currency, and FX-to-SGD assumptions.
 
 ## GitHub Pages
 
