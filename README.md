@@ -19,7 +19,7 @@ http://localhost:5187/index.html
 The editable UAT data sheet lives in Google Drive:
 
 ```text
-https://docs.google.com/spreadsheets/d/1Mwb7E5CXmoQtvB7yq4R7DmyH-O1qnxTb54NtVe9k34M/edit?gid=0#gid=0
+https://docs.google.com/spreadsheets/d/10m7sdj9aaPqG82xpeBWbx4es4zOh_Aadmmxbxl1RB_M/edit?gid=1349902348#gid=1349902348
 ```
 
 Local workbook and CSV copies are also kept in GitHub as reference backups:
