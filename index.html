@@ -48,6 +48,84 @@
 
     button, select { font: inherit; }
 
+    .login-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(22, 32, 42, .52);
+      backdrop-filter: blur(6px);
+    }
+
+    .login-gate.hidden { display: none; }
+
+    .login-card {
+      width: min(430px, 100%);
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: 0 24px 64px rgba(20, 30, 40, .28);
+    }
+
+    .login-card h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .login-card label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 800;
+    }
+
+    .login-card input,
+    .login-card select {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: white;
+    }
+
+    .login-card .btn {
+      min-height: 38px;
+      border: 0;
+      border-radius: 999px;
+      color: white;
+      background: var(--blue);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .role-status {
+      display: grid;
+      gap: 4px;
+      padding: 0 0 10px;
+      color: white;
+      font-size: 12px;
+      justify-self: end;
+    }
+
+    .role-status strong { font-size: 13px; }
+
+    .role-status button {
+      min-height: 26px;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      color: white;
+      background: rgba(255,255,255,.1);
+      cursor: pointer;
+      font-weight: 750;
+    }
+
     .app {
       min-height: 100vh;
       display: grid;
@@ -62,7 +140,7 @@
       color: white;
       background: var(--nav);
       display: grid;
-      grid-template-columns: minmax(390px, max-content) minmax(360px, 1fr) auto;
+      grid-template-columns: minmax(450px, max-content) minmax(360px, 1fr) auto auto;
       align-items: end;
       gap: 18px;
       box-shadow: 0 10px 24px rgba(20, 30, 40, .14);
@@ -292,6 +370,10 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: 16px;
+    }
+
+    .grid-2.cols {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
     .panel {
@@ -656,6 +738,50 @@
       padding: 14px;
     }
 
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .stat-card {
+      display: grid;
+      gap: 7px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+
+    .stat-card span {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .stat-card strong {
+      font-size: 20px;
+    }
+
+    .ai-panel {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .ai-output {
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfd;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
     .cost-line {
       display: grid;
       gap: 6px;
@@ -879,8 +1005,10 @@
       .nav { display: grid; grid-template-columns: repeat(3, minmax(130px, 1fr)); }
       .filters { grid-column: 1 / -1; justify-self: start; margin-top: 0; grid-template-columns: auto auto; padding-bottom: 10px; }
       .data-actions { grid-column: 2; grid-row: 1; }
+      .role-status { grid-column: 1 / -1; justify-self: start; }
       .kpis { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
       .grid-2, .detail { grid-template-columns: 1fr; }
+      .grid-2.cols, .stat-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 760px) {
@@ -905,11 +1033,31 @@
   </style>
 </head>
 <body>
+  <div class="login-gate" id="loginGate">
+    <form class="login-card" id="loginForm">
+      <div>
+        <h2>Portfolio Access</h2>
+        <p class="subtitle">Select a UAT role and use the role name as the starter password.</p>
+      </div>
+      <div class="field">
+        <label for="loginUser">User</label>
+        <select id="loginUser"></select>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password">
+      </div>
+      <button class="btn" type="submit">Login</button>
+      <span class="delta hot" id="loginError"></span>
+    </form>
+  </div>
+
   <div class="app">
     <aside class="side">
       <nav class="nav" aria-label="Dashboard views">
         <button class="active" type="button" data-view="portfolio"><span>▦</span><span>Portfolio</span></button>
         <button type="button" data-view="countries"><span>◎</span><span>Countries</span></button>
+        <button type="button" data-view="cluster" id="clusterNav"><span>◫</span><span>Cluster</span></button>
         <button type="button" data-view="detail"><span>▤</span><span>Asset Detail</span></button>
       </nav>
 
@@ -935,6 +1083,13 @@
 
       <div class="data-actions">
         <a class="data-link" id="editDataLink" href="data-entry.html" target="_blank" rel="noopener"><span>✎</span><span>Edit Data</span></a>
+      </div>
+
+      <div class="role-status">
+        <strong id="roleName">GPM</strong>
+        <span id="roleScope">MPACT portfolio</span>
+        <button id="aiKeyBtn" type="button">Admin AI Key</button>
+        <button id="logoutBtn" type="button">Logout</button>
       </div>
     </aside>
 
@@ -1026,6 +1181,43 @@
         </section>
       </section>
 
+      <section class="view" id="cluster">
+        <div class="kpis" id="clusterKpis"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Cluster Heat Tiles</strong><br><span>Scoped assets only</span></div>
+            <span id="clusterAssetCount">0 assets</span>
+          </div>
+          <div class="asset-grid" id="clusterTiles"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Cluster Cost vs Energy Intensity</strong></div>
+          </div>
+          <div class="bubble-wrap">
+            <div class="bubble-chart" id="clusterBubbleChart"></div>
+          </div>
+        </section>
+
+        <div class="grid-2 cols">
+          <section class="panel">
+            <div class="panel-head">
+              <div><strong>Cluster Utility Statistics</strong><br><span>FY Apr-Mar, current month vs prior periods and budget</span></div>
+            </div>
+            <div class="stat-grid" id="clusterUtilityStats"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div><strong>AI Explanation</strong><br><span>Evidence-first utility variance narrative</span></div>
+              <button class="data-link" id="clusterAiBtn" type="button">Generate</button>
+            </div>
+            <div class="ai-panel"><div class="ai-output" id="clusterAiOutput">Login as a multi-asset user or GPM to view cluster-level explanation.</div></div>
+          </section>
+        </div>
+      </section>
+
       <section class="view" id="detail">
         <section class="panel asset-picker">
           <div class="asset-picker-head">
@@ -1059,6 +1251,38 @@
           </div>
           <div class="cost-list" id="detailCosts"></div>
         </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Asset Heat Tile</strong><br><span>Same score logic as portfolio</span></div>
+          </div>
+          <div class="asset-grid" id="detailHeatTile"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Asset Cost vs Energy Position</strong></div>
+          </div>
+          <div class="bubble-wrap">
+            <div class="bubble-chart" id="detailBubbleChart"></div>
+          </div>
+        </section>
+
+        <div class="grid-2 cols">
+          <section class="panel">
+            <div class="panel-head">
+              <div><strong>Utility Statistics</strong><br><span>MoM, YoY, YTD and budget tracking</span></div>
+            </div>
+            <div class="stat-grid" id="detailUtilityStats"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div><strong>AI Explanation</strong><br><span>Grounded utility variance narrative</span></div>
+              <button class="data-link" id="detailAiBtn" type="button">Generate</button>
+            </div>
+            <div class="ai-panel"><div class="ai-output" id="detailAiOutput">Add Deepseek API key under Admin settings to generate live explanation. Without a key, this panel uses a local evidence-based mock.</div></div>
+          </section>
+        </div>
       </section>
     </main>
   </div>
@@ -1074,8 +1298,18 @@
       { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 107000, opex: 0.91, energy: 3.28, costSqm: 8.67, kwhSqm: 31.2, prevCostSqm: 8.30, prevKwhSqm: 30.1, score: 59, status: "warn", trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
     ];
 
+    const roles = {
+      GPM: { name: "GPM", label: "GPM", scope: "Entire MPACT portfolio", assets: "all" },
+      "Japan PM": { name: "Japan PM", label: "Japan PM", scope: "Japan assets", assets: ["Japan Logistics A", "Japan Office Cluster"], cluster: true },
+      "Vivocity": { name: "Vivocity", label: "VivoCity PM", scope: "VivoCity", assets: ["VivoCity"] },
+      "MBC 1": { name: "MBC 1", label: "MBC 1 PM", scope: "MBC", assets: ["MBC"] },
+      "MBC 2": { name: "MBC 2", label: "MBC 2 PM", scope: "MBC", assets: ["MBC"] },
+      "ARC/mTower": { name: "ARC/mTower", label: "ARC/mTower PM", scope: "ARC and mTower", assets: ["ARC", "mTower"], cluster: true }
+    };
+
     let assets = fallbackAssets;
     let selectedAsset = assets[0];
+    let currentRole = roles[localStorage.getItem("gpm-dashboard-role")] || null;
     const filters = { country: "all", type: "all" };
     const money = value => `S$${value.toFixed(2)}m`;
     const area = value => `${Math.round(value / 1000)}k sqm`;
@@ -1089,10 +1323,15 @@
       japan: "#11806a"
     }[countryKey(country)] || "#7c5dbb");
 
+    function scopedAssets() {
+      if (!currentRole || currentRole.assets === "all") return assets;
+      return assets.filter(asset => currentRole.assets.includes(asset.name));
+    }
+
     function visibleAssets() {
       const country = filters.country;
       const type = filters.type;
-      return assets
+      return scopedAssets()
         .filter(asset => (country === "all" || asset.country === country) && (type === "all" || asset.type === type))
         .sort((a, b) => countryRank(a.country) - countryRank(b.country) || a.name.localeCompare(b.name));
     }
@@ -1152,10 +1391,10 @@
       `).join("");
     }
 
-    function renderTiles(list) {
-      qs("#assetCount").textContent = `${list.length} assets`;
+    function renderTiles(list, target = "#assetTiles", countTarget = "#assetCount") {
+      if (countTarget) qs(countTarget).textContent = `${list.length} assets`;
       const countries = [...new Set(list.map(asset => asset.country))];
-      qs("#assetTiles").innerHTML = countries.map(country => {
+      qs(target).innerHTML = countries.map(country => {
         const countryAssets = list.filter(asset => asset.country === country);
         return `
           <section class="asset-country-section ${countryClass(country)}">
@@ -1198,7 +1437,7 @@
       qs("#detailCosts").innerHTML = costLines(selectedAsset, "detail");
     }
 
-    function renderBubbles(list) {
+    function renderBubbles(list, target = "#bubbleChart") {
       const minCost = 8;
       const maxCost = 14;
       const minEnergy = 20;
@@ -1241,12 +1480,13 @@
           <button class="bubble ${countryClass(asset.country)}" type="button" data-asset="${asset.name}" style="--x:${x}%;--y:${y}%;--size:${size}px" title="${asset.name}: last FY S$${asset.prevCostSqm}/sqm, ${asset.prevKwhSqm} kWh/sqm → current S$${asset.costSqm}/sqm, ${asset.kwhSqm} kWh/sqm">${asset.label}</button>
         `;
       }).join("");
-      qs("#bubbleChart").innerHTML = ticks + movementLines + points;
+      qs(target).innerHTML = ticks + movementLines + points;
     }
 
     function groupedByCountry() {
-      return [...new Set(assets.map(asset => asset.country))].map(country => {
-        const list = assets.filter(asset => asset.country === country);
+      const base = scopedAssets();
+      return [...new Set(base.map(asset => asset.country))].map(country => {
+        const list = base.filter(asset => asset.country === country);
         const totalArea = list.reduce((sum, asset) => sum + asset.gfa, 0);
         return {
           country,
@@ -1257,6 +1497,128 @@
           score: Math.round(list.reduce((sum, asset) => sum + asset.score, 0) / list.length)
         };
       });
+    }
+
+    const monthNames = ["Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May"];
+    const fyMonths = ["Apr", "May"];
+
+    function utilitySeries(asset, key) {
+      const base = key === "energy" ? asset.energy * 1000000 : asset.energy * 1000000 * .018;
+      return asset.trend.map((pressure, index) => {
+        const seasonal = .9 + index * .018;
+        const pressureFactor = .92 + pressure / 600;
+        return Math.round(base * seasonal * pressureFactor);
+      });
+    }
+
+    function utilityBudget(asset, key) {
+      const factor = key === "energy" ? .96 : .94;
+      return Math.round(utilitySeries(asset, key)[11] * factor);
+    }
+
+    function pctChange(current, previous) {
+      return previous ? ((current - previous) / previous * 100) : 0;
+    }
+
+    function statTone(value) {
+      if (value > 8) return "hot";
+      if (value > 3) return "warn";
+      if (value < -3) return "good";
+      return "";
+    }
+
+    function aggregateAssets(list) {
+      const totalGfa = list.reduce((sum, asset) => sum + asset.gfa, 0);
+      const totalNla = list.reduce((sum, asset) => sum + asset.nla, 0);
+      const totalOpex = list.reduce((sum, asset) => sum + asset.opex, 0);
+      const totalEnergy = list.reduce((sum, asset) => sum + asset.energy, 0);
+      const weighted = key => list.reduce((sum, asset) => sum + asset[key] * asset.nla, 0) / Math.max(totalNla, 1);
+      return {
+        name: currentRole?.scope || "Cluster",
+        label: "Cluster",
+        country: list[0]?.country || "Singapore",
+        type: "Cluster",
+        gfa: totalGfa,
+        nla: totalNla,
+        opex: totalOpex,
+        energy: totalEnergy,
+        costSqm: weighted("costSqm"),
+        kwhSqm: weighted("kwhSqm"),
+        prevCostSqm: weighted("prevCostSqm"),
+        prevKwhSqm: weighted("prevKwhSqm"),
+        score: Math.round(list.reduce((sum, asset) => sum + asset.score, 0) / Math.max(list.length, 1)),
+        status: statusFromScore(Math.round(list.reduce((sum, asset) => sum + asset.score, 0) / Math.max(list.length, 1))),
+        trend: monthNames.map((_, index) => Math.round(list.reduce((sum, asset) => sum + asset.trend[index], 0) / Math.max(list.length, 1))),
+        cost: {
+          energy: Math.round(list.reduce((sum, asset) => sum + asset.cost.energy, 0) / Math.max(list.length, 1)),
+          cleaning: Math.round(list.reduce((sum, asset) => sum + asset.cost.cleaning, 0) / Math.max(list.length, 1)),
+          security: Math.round(list.reduce((sum, asset) => sum + asset.cost.security, 0) / Math.max(list.length, 1)),
+          maintenance: Math.round(list.reduce((sum, asset) => sum + asset.cost.maintenance, 0) / Math.max(list.length, 1)),
+          other: Math.round(list.reduce((sum, asset) => sum + asset.cost.other, 0) / Math.max(list.length, 1))
+        }
+      };
+    }
+
+    function utilityStatsFor(list) {
+      const energySeries = monthNames.map((_, index) => list.reduce((sum, asset) => sum + utilitySeries(asset, "energy")[index], 0));
+      const waterSeries = monthNames.map((_, index) => list.reduce((sum, asset) => sum + utilitySeries(asset, "water")[index], 0));
+      const budgetEnergy = list.reduce((sum, asset) => sum + utilityBudget(asset, "energy"), 0);
+      const budgetWater = list.reduce((sum, asset) => sum + utilityBudget(asset, "water"), 0);
+      const currentEnergy = energySeries[11];
+      const currentWater = waterSeries[11];
+      return [
+        ["Energy MoM", `${pctChange(currentEnergy, energySeries[10]).toFixed(1)}%`, `${Math.round(currentEnergy).toLocaleString()} kWh in May`, statTone(pctChange(currentEnergy, energySeries[10]))],
+        ["Energy YoY", `${pctChange(currentEnergy, currentEnergy / 1.061).toFixed(1)}%`, "vs same month last FY mock baseline", statTone(6.1)],
+        ["Energy YTD", `${Math.round(energySeries.slice(10, 12).reduce((a, b) => a + b, 0)).toLocaleString()} kWh`, `${pctChange(currentEnergy, budgetEnergy).toFixed(1)}% vs monthly budget`, statTone(pctChange(currentEnergy, budgetEnergy))],
+        ["Water MoM", `${pctChange(currentWater, waterSeries[10]).toFixed(1)}%`, `${Math.round(currentWater).toLocaleString()} m3 in May`, statTone(pctChange(currentWater, waterSeries[10]))],
+        ["Water YoY", `${pctChange(currentWater, currentWater / 1.035).toFixed(1)}%`, "vs same month last FY mock baseline", statTone(3.5)],
+        ["Water YTD", `${Math.round(waterSeries.slice(10, 12).reduce((a, b) => a + b, 0)).toLocaleString()} m3`, `${pctChange(currentWater, budgetWater).toFixed(1)}% vs monthly budget`, statTone(pctChange(currentWater, budgetWater))]
+      ];
+    }
+
+    function renderUtilityStats(list, target) {
+      qs(target).innerHTML = utilityStatsFor(list).map(([label, value, note, tone]) => `
+        <div class="stat-card">
+          <span>${label}</span>
+          <strong class="${tone ? `delta ${tone}` : ""}">${value}</strong>
+          <small class="delta">${note}</small>
+        </div>
+      `).join("");
+    }
+
+    function localExplanation(list) {
+      const names = list.map(asset => asset.name).join(", ");
+      const stats = utilityStatsFor(list);
+      return `Evidence-based mock explanation for ${names}: ${stats[0][0]} is ${stats[0][1]} and ${stats[3][0]} is ${stats[3][1]}. Weather should be checked before concluding causality. If local temperature or rainfall was above normal, confidence 55% that weather contributed. Speculative operational causes such as event footfall, equipment faults, or pipe leaks should stay below 35% confidence until supported by work orders, meter logs, or incident notes.`;
+    }
+
+    async function explainWithAi(list, target) {
+      const apiKey = localStorage.getItem("gpm-deepseek-api-key");
+      if (!apiKey) {
+        qs(target).textContent = localExplanation(list);
+        return;
+      }
+      qs(target).textContent = "Generating Deepseek explanation...";
+      const prompt = `You are supporting a property performance dashboard. Explain utility MoM and YoY variances for these assets: ${JSON.stringify(list.map(asset => ({ name: asset.name, country: asset.country, type: asset.type, energyGwh: asset.energy, kwhSqm: asset.kwhSqm, score: asset.score })))}. Ground claims in dashboard data. Refer to weather statistics only as evidence to check unless provided. If speculating about footfall, equipment failure, pipe leak, or events, mark it as speculation and provide confidence percent. Be concise.`;
+      try {
+        const response = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              { role: "system", content: "Do not over-speculate. Ground explanations in supplied data. Separate evidence from hypotheses. Every speculative explanation needs a confidence percentage." },
+              { role: "user", content: prompt }
+            ],
+            temperature: .2
+          })
+        });
+        if (!response.ok) throw new Error(`Deepseek error ${response.status}`);
+        const payload = await response.json();
+        qs(target).textContent = payload.choices?.[0]?.message?.content || localExplanation(list);
+      } catch (error) {
+        qs(target).textContent = `${localExplanation(list)}\n\nDeepseek call failed in this browser session: ${error.message}`;
+      }
     }
 
     function renderCountries() {
@@ -1334,6 +1696,26 @@
       renderCostPanel(asset);
       renderTiles(visibleAssets());
       renderDetailPicker(visibleAssets());
+      renderTiles([asset], "#detailHeatTile", null);
+      renderBubbles([asset], "#detailBubbleChart");
+      renderUtilityStats([asset], "#detailUtilityStats");
+      qs("#detailAiOutput").textContent = localExplanation([asset]);
+    }
+
+    function renderCluster(list) {
+      const clusterList = list.length ? list : scopedAssets();
+      const clusterAsset = aggregateAssets(clusterList);
+      const portfolioKpis = qs("#kpis").innerHTML;
+      renderKpis(clusterList);
+      qs("#clusterKpis").innerHTML = qs("#kpis").innerHTML;
+      qs("#kpis").innerHTML = portfolioKpis;
+      renderTiles(clusterList, "#clusterTiles", "#clusterAssetCount");
+      renderBubbles(clusterList, "#clusterBubbleChart");
+      renderUtilityStats(clusterList, "#clusterUtilityStats");
+      qs("#clusterAiOutput").textContent = currentRole?.cluster || currentRole?.assets === "all"
+        ? localExplanation(clusterList)
+        : "Cluster view is available for multi-asset roles.";
+      return clusterAsset;
     }
 
     function renderAll() {
@@ -1346,6 +1728,7 @@
       renderCostPanel(selectedAsset);
       renderCountries();
       renderAssetRows(list);
+      renderCluster(scopedAssets());
       renderDetail(selectedAsset);
     }
 
@@ -1500,17 +1883,69 @@
     const titles = {
       portfolio: ["Portfolio Pulse", "One-glance view of asset heat, country mix, cost pressure, and energy intensity."],
       countries: ["Country and Type View", "Portfolio split by country and asset category, without people or actions."],
+      cluster: ["Cluster View", "Overall insights for the assets in your role scope."],
       detail: ["Asset Detail", "One building at a time: trend, intensity, and clickable cost breakdown."]
     };
 
+    function setView(view) {
+      const allowedView = view === "cluster" && !(currentRole?.cluster || currentRole?.assets === "all") ? "detail" : view;
+      document.querySelectorAll(".nav button").forEach(item => item.classList.toggle("active", item.dataset.view === allowedView));
+      document.querySelectorAll(".view").forEach(section => section.classList.toggle("active", section.id === allowedView));
+      qs("#title").textContent = titles[allowedView][0];
+      qs("#subtitle").textContent = titles[allowedView][1];
+    }
+
+    function applyRoleUi() {
+      const role = currentRole || roles.GPM;
+      qs("#roleName").textContent = role.label;
+      qs("#roleScope").textContent = role.scope;
+      qs("#loginGate").classList.toggle("hidden", !!currentRole);
+      qs("#clusterNav").style.display = role.cluster || role.assets === "all" ? "" : "none";
+      qs("#aiKeyBtn").style.display = role.name === "GPM" ? "" : "none";
+      const list = scopedAssets();
+      selectedAsset = list.includes(selectedAsset) ? selectedAsset : list[0] || assets[0];
+      filters.country = "all";
+      filters.type = "all";
+      document.querySelectorAll("[data-filter]").forEach(button => button.classList.toggle("active", button.dataset.value === "all"));
+      qs("#editDataLink").href = `data-entry.html?role=${encodeURIComponent(role.name)}`;
+      renderAll();
+      setView(role.cluster ? "cluster" : "portfolio");
+    }
+
+    function initLogin() {
+      qs("#loginUser").innerHTML = Object.keys(roles).map(name => `<option value="${name}">${roles[name].label}</option>`).join("");
+      if (currentRole) applyRoleUi();
+    }
+
+    qs("#loginForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const roleName = qs("#loginUser").value;
+      const password = qs("#loginPassword").value;
+      if (password !== roleName) {
+        qs("#loginError").textContent = "Starter password must match the selected user name.";
+        return;
+      }
+      currentRole = roles[roleName];
+      localStorage.setItem("gpm-dashboard-role", roleName);
+      qs("#loginPassword").value = "";
+      qs("#loginError").textContent = "";
+      applyRoleUi();
+    });
+
+    qs("#logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("gpm-dashboard-role");
+      currentRole = null;
+      qs("#loginGate").classList.remove("hidden");
+    });
+
+    qs("#aiKeyBtn").addEventListener("click", () => {
+      const current = localStorage.getItem("gpm-deepseek-api-key") || "";
+      const next = window.prompt("Deepseek v4 pro API key for this browser session", current);
+      if (next !== null) localStorage.setItem("gpm-deepseek-api-key", next.trim());
+    });
+
     document.querySelectorAll(".nav button").forEach(button => {
-      button.addEventListener("click", () => {
-        const view = button.dataset.view;
-        document.querySelectorAll(".nav button").forEach(item => item.classList.toggle("active", item === button));
-        document.querySelectorAll(".view").forEach(section => section.classList.toggle("active", section.id === view));
-        qs("#title").textContent = titles[view][0];
-        qs("#subtitle").textContent = titles[view][1];
-      });
+      button.addEventListener("click", () => setView(button.dataset.view));
     });
 
     document.querySelectorAll(".period button").forEach(button => {
@@ -1533,6 +1968,9 @@
       if (costLine) costLine.classList.toggle("open");
     });
 
+    qs("#detailAiBtn").addEventListener("click", () => explainWithAi([selectedAsset], "#detailAiOutput"));
+    qs("#clusterAiBtn").addEventListener("click", () => explainWithAi(scopedAssets(), "#clusterAiOutput"));
+
     document.querySelectorAll("[data-filter]").forEach(button => {
       button.addEventListener("click", () => {
         const group = button.dataset.filter;
@@ -1544,6 +1982,7 @@
       });
     });
 
+    initLogin();
     loadSheetData();
   </script>
 </body>

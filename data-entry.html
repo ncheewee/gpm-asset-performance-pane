@@ -36,6 +36,33 @@
 
     button, input, select, textarea { font: inherit; }
 
+    .login-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(23, 33, 43, .52);
+      backdrop-filter: blur(6px);
+    }
+
+    .login-gate.hidden { display: none; }
+
+    .login-card {
+      width: min(430px, 100%);
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: 0 24px 64px rgba(20, 30, 40, .28);
+    }
+
+    .login-card h2 { margin: 0; font-size: 24px; }
+    .login-card .btn { color: white; border: 0; background: var(--blue); }
+
     .app {
       min-height: 100vh;
       display: grid;
@@ -485,11 +512,31 @@
   </style>
 </head>
 <body>
+  <div class="login-gate" id="loginGate">
+    <form class="login-card" id="loginForm">
+      <div>
+        <h2>Data Entry Access</h2>
+        <p class="save-status">Select a UAT role and use the role name as the starter password.</p>
+      </div>
+      <div class="field">
+        <label for="loginUser">User</label>
+        <select id="loginUser"></select>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password">
+      </div>
+      <button class="btn primary" type="submit">Login</button>
+      <span class="save-status" id="loginError"></span>
+    </form>
+  </div>
+
   <div class="app">
     <header>
       <h1>Monthly Data Entry</h1>
       <div class="header-actions">
         <span id="roleBadge" class="status-pill open">User mode</span>
+        <button class="btn" id="logoutBtn" type="button">Logout</button>
         <button class="btn" id="adminBtn" type="button">Admin Login</button>
         <a class="link-btn" href="index.html">Dashboard</a>
       </div>
@@ -614,8 +661,16 @@
                     <input id="energyKwh" type="number" min="0" step="1" data-month-field>
                   </div>
                   <div class="field input-cell">
+                    <label for="energyBudgetKwh">Energy budget kWh</label>
+                    <input id="energyBudgetKwh" type="number" min="0" step="1" data-month-field>
+                  </div>
+                  <div class="field input-cell">
                     <label for="waterM3">Water m3</label>
                     <input id="waterM3" type="number" min="0" step="1" data-month-field>
+                  </div>
+                  <div class="field input-cell">
+                    <label for="waterBudgetM3">Water budget m3</label>
+                    <input id="waterBudgetM3" type="number" min="0" step="1" data-month-field>
                   </div>
                 </div>
               </section>
@@ -637,6 +692,14 @@
               <div class="field">
                 <label for="waterSqm">Water m3/sqm</label>
                 <input id="waterSqm" type="number" disabled>
+              </div>
+              <div class="field">
+                <label for="energyBudgetVariance">Energy vs budget</label>
+                <input id="energyBudgetVariance" type="text" disabled>
+              </div>
+              <div class="field">
+                <label for="waterBudgetVariance">Water vs budget</label>
+                <input id="waterBudgetVariance" type="text" disabled>
               </div>
               <div class="field">
                 <label for="pressure">Pressure index</label>
@@ -692,6 +755,14 @@
     const months = ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
     const storageKey = "gpm-entry-prototype-v3";
     const costCategories = ["energy", "cleaning", "security", "maintenance", "other"];
+    const roles = {
+      GPM: { name: "GPM", label: "GPM", scope: "Entire MPACT portfolio", assets: "all" },
+      "Japan PM": { name: "Japan PM", label: "Japan PM", scope: "Japan assets", assets: ["Japan Logistics A", "Japan Office Cluster"], cluster: true },
+      "Vivocity": { name: "Vivocity", label: "VivoCity PM", scope: "VivoCity", assets: ["VivoCity"] },
+      "MBC 1": { name: "MBC 1", label: "MBC 1 PM", scope: "MBC", assets: ["MBC"] },
+      "MBC 2": { name: "MBC 2", label: "MBC 2 PM", scope: "MBC", assets: ["MBC"] },
+      "ARC/mTower": { name: "ARC/mTower", label: "ARC/mTower PM", scope: "ARC and mTower", assets: ["ARC", "mTower"], cluster: true }
+    };
     const fallbackAssets = [
       { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, currency: "SGD", exchangeRate: 1, totalCost: 1840000, energyKwh: 4430000, waterM3: 118000, cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
       { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, currency: "SGD", exchangeRate: 1, totalCost: 2960000, energyKwh: 7810000, waterM3: 132000, cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
@@ -704,7 +775,7 @@
     const qs = selector => document.querySelector(selector);
     const byId = id => document.getElementById(id);
     const clone = value => JSON.parse(JSON.stringify(value));
-    const currentUser = () => state.admin ? "admin" : "user";
+    const currentUser = () => state.admin ? "admin" : (currentRole?.name || "user");
 
     function seedState() {
       const records = {};
@@ -722,7 +793,9 @@
               other: Number((totalCost * asset.cost.other / 100).toFixed(0))
             },
             energyKwh: Number((asset.energyKwh * (.9 + index * .015)).toFixed(0)),
+            energyBudgetKwh: Number((asset.energyKwh * (.9 + index * .015) * .96).toFixed(0)),
             waterM3: Number((asset.waterM3 * (.86 + index * .018)).toFixed(0)),
+            waterBudgetM3: Number((asset.waterM3 * (.86 + index * .018) * .94).toFixed(0)),
             notes: index < 11 ? "Submitted" : ""
           };
         });
@@ -741,6 +814,8 @@
 
     let state = loadState();
     state.admin = false;
+    const requestedRole = new URLSearchParams(location.search).get("role");
+    let currentRole = roles[localStorage.getItem("gpm-dashboard-role")] || null;
     let selectedAssetName = state.assets[0].name;
     let selectedMonth = CURRENT_MONTH;
 
@@ -749,7 +824,13 @@
     }
 
     function selectedAsset() {
-      return state.assets.find(asset => asset.name === selectedAssetName) || state.assets[0];
+      const scoped = scopedAssets();
+      return scoped.find(asset => asset.name === selectedAssetName) || scoped[0] || state.assets[0];
+    }
+
+    function scopedAssets() {
+      if (!currentRole || currentRole.assets === "all") return state.assets;
+      return state.assets.filter(asset => currentRole.assets.includes(asset.name));
     }
 
     function selectedRecord() {
@@ -841,6 +922,10 @@
       return asset.nla ? (Number(record.waterM3 || 0) / asset.nla).toFixed(3) : "";
     }
 
+    function budgetVariance(actual, budget) {
+      return budget ? `${((Number(actual || 0) - Number(budget || 0)) / Number(budget || 1) * 100).toFixed(1)}%` : "No budget";
+    }
+
     function averageForAsset(asset, metricFn) {
       const assetRecords = state.records[asset.name] || {};
       const values = months.map(month => metricFn(assetRecords[month] || {})).filter(value => Number.isFinite(value) && value > 0);
@@ -868,8 +953,9 @@
     }
 
     function renderAssets() {
-      byId("assetCount").textContent = `${state.assets.length} assets`;
-      byId("assetList").innerHTML = state.assets.map(asset => `
+      const list = scopedAssets();
+      byId("assetCount").textContent = `${list.length} assets`;
+      byId("assetList").innerHTML = list.map(asset => `
         <button class="asset-button ${countryClass(asset.country)} ${asset.name === selectedAssetName ? "active" : ""}" type="button" data-asset="${asset.name}">
           <strong>${asset.label || asset.name}</strong>
           <span>${asset.country} · ${asset.type}</span>
@@ -891,7 +977,7 @@
       const monthlyOpen = canEditMonthly();
       byId("formTitle").textContent = asset.name;
       byId("formSubtitle").textContent = `${selectedMonth} · ${asset.country} · ${asset.type}`;
-      byId("roleBadge").textContent = state.admin ? "Admin mode" : "User mode";
+      byId("roleBadge").textContent = state.admin ? "Admin mode" : `${currentRole?.label || "User"} mode`;
       byId("roleBadge").className = `status-pill ${state.admin ? "admin" : "open"}`;
       byId("adminBtn").textContent = state.admin ? "Exit Admin" : "Admin Login";
       byId("editBadge").textContent = monthlyOpen ? "Editable" : "Read only";
@@ -915,12 +1001,16 @@
       setValue("maintenanceCost", costs.maintenance);
       setValue("otherCost", costs.other);
       setValue("energyKwh", record.energyKwh || Number(record.energy || 0) * 1000000);
+      setValue("energyBudgetKwh", record.energyBudgetKwh);
       setValue("waterM3", record.waterM3);
+      setValue("waterBudgetM3", record.waterBudgetM3);
       setText("totalCost", formatMoney(totalCostLocal(record), asset.currency || "SGD"));
       setText("totalCostSgd", `SGD ${formatNumber(totalCostSgd(asset, record), 2)}`);
       setValue("costSqm", calcCostSqm(asset, record));
       setValue("kwhSqm", calcKwhSqm(asset, record));
       setValue("waterSqm", calcWaterSqm(asset, record));
+      setValue("energyBudgetVariance", budgetVariance(record.energyKwh, record.energyBudgetKwh));
+      setValue("waterBudgetVariance", budgetVariance(record.waterM3, record.waterBudgetM3));
       setValue("pressure", calcPressure(asset, record));
       setText("energyPct", costPercent(record, "energy"));
       setText("cleaningPct", costPercent(record, "cleaning"));
@@ -946,6 +1036,7 @@
     }
 
     function renderAll() {
+      if (!scopedAssets().some(asset => asset.name === selectedAssetName)) selectedAssetName = scopedAssets()[0]?.name || state.assets[0].name;
       renderAssets();
       renderMonths();
       renderForm();
@@ -976,7 +1067,9 @@
           other: numberValue("otherCost")
         };
         record.energyKwh = numberValue("energyKwh");
+        record.energyBudgetKwh = numberValue("energyBudgetKwh");
         record.waterM3 = numberValue("waterM3");
+        record.waterBudgetM3 = numberValue("waterBudgetM3");
         record.notes = byId("notes").value.trim();
       }
 
@@ -1008,7 +1101,9 @@
           other: numberValue("otherCost")
         },
         energyKwh: numberValue("energyKwh"),
-        waterM3: numberValue("waterM3")
+        energyBudgetKwh: numberValue("energyBudgetKwh"),
+        waterM3: numberValue("waterM3"),
+        waterBudgetM3: numberValue("waterBudgetM3")
       };
       const assetForCalc = {
         ...asset,
@@ -1020,6 +1115,8 @@
       setValue("costSqm", calcCostSqm(assetForCalc, record));
       setValue("kwhSqm", calcKwhSqm(assetForCalc, record));
       setValue("waterSqm", calcWaterSqm(assetForCalc, record));
+      setValue("energyBudgetVariance", budgetVariance(record.energyKwh, record.energyBudgetKwh));
+      setValue("waterBudgetVariance", budgetVariance(record.waterM3, record.waterBudgetM3));
       setValue("pressure", calcPressure(assetForCalc, record));
       setText("energyPct", costPercent(record, "energy"));
       setText("cleaningPct", costPercent(record, "cleaning"));
@@ -1045,7 +1142,7 @@
     });
 
     byId("entryForm").addEventListener("submit", saveEntry);
-    ["energyCost", "cleaningCost", "securityCost", "maintenanceCost", "otherCost", "energyKwh", "waterM3", "currency", "exchangeRate"].forEach(id => {
+    ["energyCost", "cleaningCost", "securityCost", "maintenanceCost", "otherCost", "energyKwh", "energyBudgetKwh", "waterM3", "waterBudgetM3", "currency", "exchangeRate"].forEach(id => {
       byId(id).addEventListener("input", updateDerived);
       byId(id).addEventListener("change", updateDerived);
     });
@@ -1059,6 +1156,40 @@
         byId("adminPassword").value = "";
         byId("adminDialog").showModal();
       }
+    });
+
+    function applyRoleUi() {
+      byId("loginGate").classList.toggle("hidden", !!currentRole);
+      if (!currentRole) return;
+      localStorage.setItem("gpm-dashboard-role", currentRole.name);
+      selectedAssetName = scopedAssets()[0]?.name || state.assets[0].name;
+      renderAll();
+    }
+
+    function initLogin() {
+      byId("loginUser").innerHTML = Object.keys(roles).map(name => `<option value="${name}" ${name === (requestedRole || "") ? "selected" : ""}>${roles[name].label}</option>`).join("");
+      if (currentRole) applyRoleUi();
+    }
+
+    byId("loginForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const roleName = byId("loginUser").value;
+      if (byId("loginPassword").value !== roleName) {
+        byId("loginError").textContent = "Starter password must match the selected user name.";
+        return;
+      }
+      currentRole = roles[roleName];
+      byId("loginPassword").value = "";
+      byId("loginError").textContent = "";
+      applyRoleUi();
+    });
+
+    byId("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("gpm-dashboard-role");
+      currentRole = null;
+      state.admin = false;
+      renderAll();
+      byId("loginGate").classList.remove("hidden");
     });
 
     function loginAdmin() {
@@ -1082,12 +1213,13 @@
 
     byId("resetBtn").addEventListener("click", () => {
       state = seedState();
-      selectedAssetName = state.assets[0].name;
+      selectedAssetName = scopedAssets()[0]?.name || state.assets[0].name;
       selectedMonth = CURRENT_MONTH;
       saveState();
       renderAll();
     });
 
+    initLogin();
     renderAll();
   </script>
 </body>
