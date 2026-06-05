@@ -43,8 +43,7 @@
       display: grid;
       place-items: center;
       padding: 22px;
-      background: rgba(23, 33, 43, .52);
-      backdrop-filter: blur(6px);
+      background: var(--page);
     }
 
     .login-gate.hidden { display: none; }
@@ -575,6 +574,7 @@
                   <option>Office</option>
                   <option>Retail</option>
                   <option>Logistics</option>
+                  <option>Commercial</option>
                 </select>
               </div>
               <div class="field admin-cell">
@@ -753,22 +753,28 @@
     const CURRENT_MONTH = "May";
     const ADMIN_PASSWORD = "GPM2026";
     const months = ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
-    const storageKey = "gpm-entry-prototype-v3";
+    const storageKey = "gpm-entry-prototype-v4";
     const costCategories = ["energy", "cleaning", "security", "maintenance", "other"];
     const roles = {
       GPM: { name: "GPM", label: "GPM", scope: "Entire MPACT portfolio", assets: "all" },
-      "Japan PM": { name: "Japan PM", label: "Japan PM", scope: "Japan assets", assets: ["Japan Logistics A", "Japan Office Cluster"], cluster: true },
+      "Japan PM": { name: "Japan PM", label: "Japan PM", scope: "Japan commercial assets", assets: ["HPB", "MON", "HNB", "OPB", "MBP", "MBT", "FJM"], cluster: true },
       "Vivocity": { name: "Vivocity", label: "VivoCity PM", scope: "VivoCity", assets: ["VivoCity"] },
-      MBC: { name: "MBC", label: "MBC PM", scope: "MBC", assets: ["MBC"] },
+      MBC: { name: "MBC", label: "MBC PM", scope: "MBC 1 and MBC 2", assets: ["MBC 1", "MBC 2"], cluster: true },
       "ARC/mTower": { name: "ARC/mTower", label: "ARC/mTower PM", scope: "ARC and mTower", assets: ["ARC", "mTower"], cluster: true }
     };
     const fallbackAssets = [
       { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, currency: "SGD", exchangeRate: 1, totalCost: 1840000, energyKwh: 4430000, waterM3: 118000, cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
-      { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, currency: "SGD", exchangeRate: 1, totalCost: 2960000, energyKwh: 7810000, waterM3: 132000, cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
+      { name: "MBC 1", label: "MBC 1", country: "Singapore", type: "Office", gfa: 146000, nla: 123000, currency: "SGD", exchangeRate: 1, totalCost: 1610000, energyKwh: 4280000, waterM3: 72000, cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
+      { name: "MBC 2", label: "MBC 2", country: "Singapore", type: "Office", gfa: 122000, nla: 103000, currency: "SGD", exchangeRate: 1, totalCost: 1350000, energyKwh: 3530000, waterM3: 60000, cost: { energy: 45, cleaning: 14, security: 14, maintenance: 18, other: 9 } },
       { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, currency: "SGD", exchangeRate: 1, totalCost: 720000, energyKwh: 1310000, waterM3: 41000, cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
       { name: "mTower", label: "mTower", country: "Singapore", type: "Office", gfa: 96000, nla: 79000, currency: "SGD", exchangeRate: 1, totalCost: 910000, energyKwh: 1680000, waterM3: 46000, cost: { energy: 35, cleaning: 17, security: 18, maintenance: 20, other: 10 } },
-      { name: "Japan Logistics A", label: "J-Log", country: "Japan", type: "Logistics", gfa: 138000, nla: 124000, currency: "JPY", exchangeRate: 0.0088, totalCost: 122727273, energyKwh: 3090000, waterM3: 34000, cost: { energy: 32, cleaning: 10, security: 11, maintenance: 29, other: 18 } },
-      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 107000, currency: "JPY", exchangeRate: 0.0088, totalCost: 103409091, energyKwh: 3280000, waterM3: 59000, cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
+      { name: "HPB", label: "HPB", country: "Japan", type: "Commercial", gfa: 42000, nla: 36000, currency: "JPY", exchangeRate: 0.0088, totalCost: 36363636, energyKwh: 1060000, waterM3: 19000, cost: { energy: 38, cleaning: 13, security: 13, maintenance: 23, other: 13 } },
+      { name: "MON", label: "MON", country: "Japan", type: "Commercial", gfa: 38000, nla: 32000, currency: "JPY", exchangeRate: 0.0088, totalCost: 31818182, energyKwh: 910000, waterM3: 16400, cost: { energy: 36, cleaning: 14, security: 13, maintenance: 24, other: 13 } },
+      { name: "HNB", label: "HNB", country: "Japan", type: "Commercial", gfa: 45000, nla: 39000, currency: "JPY", exchangeRate: 0.0088, totalCost: 38636364, energyKwh: 1140000, waterM3: 20500, cost: { energy: 39, cleaning: 12, security: 13, maintenance: 23, other: 13 } },
+      { name: "OPB", label: "OPB", country: "Japan", type: "Commercial", gfa: 35000, nla: 30000, currency: "JPY", exchangeRate: 0.0088, totalCost: 28409091, energyKwh: 820000, waterM3: 14800, cost: { energy: 35, cleaning: 13, security: 14, maintenance: 25, other: 13 } },
+      { name: "MBP", label: "MBP", country: "Japan", type: "Commercial", gfa: 52000, nla: 45500, currency: "JPY", exchangeRate: 0.0088, totalCost: 48863636, energyKwh: 1450000, waterM3: 26100, cost: { energy: 40, cleaning: 12, security: 13, maintenance: 22, other: 13 } },
+      { name: "MBT", label: "MBT", country: "Japan", type: "Commercial", gfa: 47000, nla: 41000, currency: "JPY", exchangeRate: 0.0088, totalCost: 42045455, energyKwh: 1210000, waterM3: 21800, cost: { energy: 37, cleaning: 13, security: 13, maintenance: 24, other: 13 } },
+      { name: "FJM", label: "FJM", country: "Japan", type: "Commercial", gfa: 31000, nla: 27000, currency: "JPY", exchangeRate: 0.0088, totalCost: 25000000, energyKwh: 720000, waterM3: 13000, cost: { energy: 34, cleaning: 14, security: 13, maintenance: 25, other: 14 } }
     ];
 
     const qs = selector => document.querySelector(selector);
