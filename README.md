@@ -31,6 +31,8 @@ data/portfolio-data.csv
 
 The app loads the Google Sheet at runtime through Google Visualization JSONP, then falls back to embedded sample data if the Sheet is not reachable. For live UAT updates, keep the Sheet set to "Anyone with the link can view".
 
+Use `Portfolio Data` for the current dashboard output table. Use `Monthly Inputs` for property-by-month data entry: each asset has Jun-May rows, with yellow cells for editable monthly inputs and blue cells for reference/calculated fields.
+
 ## GitHub Pages
 
 Publish from the `main` branch root.
