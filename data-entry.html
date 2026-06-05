@@ -14,6 +14,9 @@
       --nav: #21313f;
       --blue: #2f68b1;
       --green: #11806a;
+      --country-singapore: #2f68b1;
+      --country-japan: #11806a;
+      --country-other: #7c5dbb;
       --yellow: #fff8e8;
       --yellow-strong: #fff2cc;
       --calc: #eef5fb;
@@ -140,37 +143,41 @@
     .asset-list {
       display: grid;
       padding: 10px;
-      gap: 7px;
+      gap: 8px;
     }
 
     .asset-button {
+      --country: var(--country-singapore);
+      min-height: 34px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      min-height: 48px;
-      padding: 8px 10px;
-      display: grid;
-      gap: 3px;
+      border-radius: 999px;
+      padding: 0 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       color: var(--ink);
       background: white;
       cursor: pointer;
       text-align: left;
+      font-weight: 800;
     }
 
     .asset-button.active {
-      border-color: var(--blue);
-      background: #f0f6fd;
-      box-shadow: inset 4px 0 0 var(--blue);
+      color: white;
+      border-color: var(--country);
+      background: var(--country);
     }
 
-    .asset-button.japan.active {
-      border-color: var(--green);
-      background: #eef8f5;
-      box-shadow: inset 4px 0 0 var(--green);
-    }
+    .asset-button.singapore { --country: var(--country-singapore); }
+    .asset-button.japan { --country: var(--country-japan); }
+    .asset-button.other-country { --country: var(--country-other); }
 
     .asset-button span {
-      color: var(--muted);
+      color: inherit;
+      opacity: .72;
       font-size: 12px;
+      font-weight: 700;
     }
 
     .workbench {
@@ -185,6 +192,14 @@
       padding: 12px 15px;
       border-bottom: 1px solid var(--line);
       background: white;
+    }
+
+    .asset-basics {
+      padding: 15px;
+      display: grid;
+      gap: 13px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
     }
 
     .chip {
@@ -219,6 +234,12 @@
       grid-template-columns: repeat(4, minmax(140px, 1fr));
       gap: 12px;
     }
+
+    .form-grid.compact {
+      grid-template-columns: repeat(6, minmax(110px, 1fr));
+    }
+
+    .field.full { grid-column: 1 / -1; }
 
     .field {
       display: grid;
@@ -312,6 +333,12 @@
       font-size: 13px;
     }
 
+    .calc-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .audit-list {
       display: grid;
       gap: 8px;
@@ -353,10 +380,12 @@
       .header-actions { justify-content: start; }
       main { grid-template-columns: 1fr; padding: 14px; }
       .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .form-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 560px) {
       .form-grid { grid-template-columns: 1fr; }
+      .form-grid.compact { grid-template-columns: 1fr; }
       .form-actions { align-items: stretch; }
       .form-actions .btn { width: 100%; }
     }
@@ -387,8 +416,7 @@
             <div><strong id="formTitle">Asset</strong><span id="formSubtitle">Month</span></div>
             <span id="editBadge" class="status-pill">Locked</span>
           </div>
-          <div class="month-row" id="monthRow"></div>
-          <form id="entryForm">
+          <div class="asset-basics">
             <div class="section-title">
               <strong>Asset Basics</strong>
               <span class="status-pill" id="assetBasicsBadge">Admin only</span>
@@ -418,51 +446,92 @@
                 <input id="nla" type="number" min="0" step="1" data-admin-field>
               </div>
             </div>
+          </div>
+          <div class="month-row" id="monthRow"></div>
+          <form id="entryForm">
 
             <div class="section-title">
               <strong>Monthly Inputs</strong>
               <span class="status-pill" id="monthlyBadge">Current month only</span>
             </div>
-            <div class="form-grid">
+            <div class="form-grid compact">
               <div class="field input-cell">
-                <label for="opex">Opex_m</label>
-                <input id="opex" type="number" min="0" step="0.01" data-month-field>
+                <label for="energyCost">Energy S$k</label>
+                <input id="energyCost" type="number" min="0" step="1" data-month-field>
               </div>
               <div class="field input-cell">
-                <label for="energy">Energy_gwh</label>
-                <input id="energy" type="number" min="0" step="0.01" data-month-field>
+                <label for="cleaningCost">Cleaning S$k</label>
+                <input id="cleaningCost" type="number" min="0" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="securityCost">Security S$k</label>
+                <input id="securityCost" type="number" min="0" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="maintenanceCost">Maintenance S$k</label>
+                <input id="maintenanceCost" type="number" min="0" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="otherCost">Other S$k</label>
+                <input id="otherCost" type="number" min="0" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="energyKwh">Energy kWh</label>
+                <input id="energyKwh" type="number" min="0" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="waterM3">Water m3</label>
+                <input id="waterM3" type="number" min="0" step="1" data-month-field>
+              </div>
+            </div>
+
+            <div class="section-title">
+              <strong>Computed Outputs</strong>
+              <span class="status-pill">Calculated</span>
+            </div>
+            <div class="form-grid compact">
+              <div class="field">
+                <label for="totalCost">Total S$k</label>
+                <input id="totalCost" type="number" disabled>
               </div>
               <div class="field">
-                <label for="costSqm">Cost_sqm</label>
+                <label for="costSqm">Cost S$/sqm</label>
                 <input id="costSqm" type="number" disabled>
               </div>
               <div class="field">
-                <label for="kwhSqm">kWh_sqm</label>
+                <label for="kwhSqm">Energy kWh/sqm</label>
                 <input id="kwhSqm" type="number" disabled>
               </div>
-              <div class="field input-cell">
+              <div class="field">
+                <label for="waterSqm">Water m3/sqm</label>
+                <input id="waterSqm" type="number" disabled>
+              </div>
+              <div class="field">
                 <label for="pressure">Pressure index</label>
-                <input id="pressure" type="number" min="0" max="100" step="1" data-month-field>
+                <input id="pressure" type="number" disabled>
               </div>
-              <div class="field input-cell">
+              <div class="field">
                 <label for="energyPct">Energy %</label>
-                <input id="energyPct" type="number" min="0" max="100" step="1" data-month-field>
+                <input id="energyPct" type="number" disabled>
               </div>
-              <div class="field input-cell">
+              <div class="field">
                 <label for="cleaningPct">Cleaning %</label>
-                <input id="cleaningPct" type="number" min="0" max="100" step="1" data-month-field>
+                <input id="cleaningPct" type="number" disabled>
               </div>
-              <div class="field input-cell">
+              <div class="field">
                 <label for="securityPct">Security %</label>
-                <input id="securityPct" type="number" min="0" max="100" step="1" data-month-field>
+                <input id="securityPct" type="number" disabled>
               </div>
-              <div class="field input-cell">
+              <div class="field">
                 <label for="maintenancePct">Maintenance %</label>
-                <input id="maintenancePct" type="number" min="0" max="100" step="1" data-month-field>
+                <input id="maintenancePct" type="number" disabled>
               </div>
-              <div class="field input-cell">
+              <div class="field">
                 <label for="otherPct">Other %</label>
-                <input id="otherPct" type="number" min="0" max="100" step="1" data-month-field>
+                <input id="otherPct" type="number" disabled>
+              </div>
+              <div class="field full">
+                <span class="calc-note">Pressure index is derived from cost intensity, energy intensity, and movement against the previous month.</span>
               </div>
             </div>
             <div class="field input-cell">
@@ -509,14 +578,15 @@
     const CURRENT_MONTH = "May";
     const ADMIN_PASSWORD = "GPM2026";
     const months = ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
-    const storageKey = "gpm-entry-prototype-v1";
+    const storageKey = "gpm-entry-prototype-v2";
+    const costCategories = ["energy", "cleaning", "security", "maintenance", "other"];
     const fallbackAssets = [
-      { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, opex: 1.84, energy: 4.43, trend: [48,45,50,53,56,58,62,55,54,61,68,72], cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
-      { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, opex: 2.96, energy: 7.81, trend: [46,48,50,52,55,57,59,61,66,70,79,86], cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
-      { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, opex: 0.72, energy: 1.31, trend: [40,42,47,48,52,56,58,61,59,66,72,78], cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
-      { name: "mTower", label: "mTower", country: "Singapore", type: "Office", gfa: 96000, nla: 79000, opex: 0.91, energy: 1.68, trend: [42,41,43,45,47,49,50,52,54,57,60,63], cost: { energy: 35, cleaning: 17, security: 18, maintenance: 20, other: 10 } },
-      { name: "Japan Logistics A", label: "J-Log", country: "Japan", type: "Logistics", gfa: 138000, nla: 124000, opex: 1.08, energy: 3.09, trend: [55,53,51,50,48,47,46,45,44,43,42,41], cost: { energy: 32, cleaning: 10, security: 11, maintenance: 29, other: 18 } },
-      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 107000, opex: 0.91, energy: 3.28, trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
+      { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, totalCostK: 1840, energyKwh: 4430000, waterM3: 118000, cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
+      { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, totalCostK: 2960, energyKwh: 7810000, waterM3: 132000, cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
+      { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, totalCostK: 720, energyKwh: 1310000, waterM3: 41000, cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
+      { name: "mTower", label: "mTower", country: "Singapore", type: "Office", gfa: 96000, nla: 79000, totalCostK: 910, energyKwh: 1680000, waterM3: 46000, cost: { energy: 35, cleaning: 17, security: 18, maintenance: 20, other: 10 } },
+      { name: "Japan Logistics A", label: "J-Log", country: "Japan", type: "Logistics", gfa: 138000, nla: 124000, totalCostK: 1080, energyKwh: 3090000, waterM3: 34000, cost: { energy: 32, cleaning: 10, security: 11, maintenance: 29, other: 18 } },
+      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 107000, totalCostK: 910, energyKwh: 3280000, waterM3: 59000, cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
     ];
 
     const qs = selector => document.querySelector(selector);
@@ -530,15 +600,17 @@
         records[asset.name] = {};
         months.forEach((month, index) => {
           const monthFactor = .92 + index * .014;
+          const totalCostK = asset.totalCostK * monthFactor;
           records[asset.name][month] = {
-            opex: Number((asset.opex * monthFactor).toFixed(2)),
-            energy: Number((asset.energy * (.9 + index * .015)).toFixed(2)),
-            pressure: asset.trend[index],
-            energyPct: asset.cost.energy,
-            cleaningPct: asset.cost.cleaning,
-            securityPct: asset.cost.security,
-            maintenancePct: asset.cost.maintenance,
-            otherPct: asset.cost.other,
+            costs: {
+              energy: Number((totalCostK * asset.cost.energy / 100).toFixed(0)),
+              cleaning: Number((totalCostK * asset.cost.cleaning / 100).toFixed(0)),
+              security: Number((totalCostK * asset.cost.security / 100).toFixed(0)),
+              maintenance: Number((totalCostK * asset.cost.maintenance / 100).toFixed(0)),
+              other: Number((totalCostK * asset.cost.other / 100).toFixed(0))
+            },
+            energyKwh: Number((asset.energyKwh * (.9 + index * .015)).toFixed(0)),
+            waterM3: Number((asset.waterM3 * (.86 + index * .018)).toFixed(0)),
             notes: index < 11 ? "Submitted" : ""
           };
         });
@@ -584,7 +656,10 @@
     }
 
     function countryClass(country) {
-      return String(country || "").toLowerCase() === "japan" ? "japan" : "singapore";
+      const normalized = String(country || "").toLowerCase();
+      if (normalized === "japan") return "japan";
+      if (normalized === "singapore") return "singapore";
+      return "other-country";
     }
 
     function numberValue(id) {
@@ -596,12 +671,68 @@
       byId(id).value = value ?? "";
     }
 
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function recordCosts(record) {
+      if (record.costs) return record.costs;
+      const totalCostK = Number(record.opex || 0) * 1000;
+      return {
+        energy: totalCostK * Number(record.energyPct || 0) / 100,
+        cleaning: totalCostK * Number(record.cleaningPct || 0) / 100,
+        security: totalCostK * Number(record.securityPct || 0) / 100,
+        maintenance: totalCostK * Number(record.maintenancePct || 0) / 100,
+        other: totalCostK * Number(record.otherPct || 0) / 100
+      };
+    }
+
+    function totalCostK(record) {
+      const costs = recordCosts(record);
+      return costCategories.reduce((sum, key) => sum + Number(costs[key] || 0), 0);
+    }
+
+    function costPercent(record, key) {
+      const total = totalCostK(record);
+      return total ? (Number(recordCosts(record)[key] || 0) / total * 100).toFixed(1) : "";
+    }
+
     function calcCostSqm(asset, record) {
-      return asset.nla ? (Number(record.opex || 0) * 1000000 / asset.nla).toFixed(2) : "";
+      return asset.nla ? (totalCostK(record) * 1000 / asset.nla).toFixed(2) : "";
     }
 
     function calcKwhSqm(asset, record) {
-      return asset.nla ? (Number(record.energy || 0) * 1000000 / asset.nla).toFixed(1) : "";
+      return asset.nla ? (Number(record.energyKwh || record.energy * 1000000 || 0) / asset.nla).toFixed(1) : "";
+    }
+
+    function calcWaterSqm(asset, record) {
+      return asset.nla ? (Number(record.waterM3 || 0) / asset.nla).toFixed(3) : "";
+    }
+
+    function averageForAsset(asset, metricFn) {
+      const assetRecords = state.records[asset.name] || {};
+      const values = months.map(month => metricFn(assetRecords[month] || {})).filter(value => Number.isFinite(value) && value > 0);
+      return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    }
+
+    function previousRecord(asset) {
+      const index = months.indexOf(selectedMonth);
+      const previousMonth = months[Math.max(0, index - 1)];
+      return state.records[asset.name]?.[previousMonth] || selectedRecord();
+    }
+
+    function calcPressure(asset, record) {
+      const costIntensity = Number(calcCostSqm(asset, record));
+      const energyIntensity = Number(calcKwhSqm(asset, record));
+      const avgCost = averageForAsset(asset, item => asset.nla ? totalCostK(item) * 1000 / asset.nla : 0);
+      const avgEnergy = averageForAsset(asset, item => asset.nla ? Number(item.energyKwh || item.energy * 1000000 || 0) / asset.nla : 0);
+      const prevTotal = totalCostK(previousRecord(asset));
+      const trendRatio = prevTotal ? totalCostK(record) / prevTotal : 1;
+      const score = 50
+        + (avgCost ? ((costIntensity / avgCost) - 1) * 35 : 0)
+        + (avgEnergy ? ((energyIntensity / avgEnergy) - 1) * 25 : 0)
+        + ((trendRatio - 1) * 20);
+      return Math.round(clamp(score, 0, 100));
     }
 
     function renderAssets() {
@@ -642,16 +773,24 @@
       setValue("type", asset.type);
       setValue("gfa", asset.gfa);
       setValue("nla", asset.nla);
-      setValue("opex", record.opex);
-      setValue("energy", record.energy);
+      const costs = recordCosts(record);
+      setValue("energyCost", costs.energy);
+      setValue("cleaningCost", costs.cleaning);
+      setValue("securityCost", costs.security);
+      setValue("maintenanceCost", costs.maintenance);
+      setValue("otherCost", costs.other);
+      setValue("energyKwh", record.energyKwh || Number(record.energy || 0) * 1000000);
+      setValue("waterM3", record.waterM3);
+      setValue("totalCost", totalCostK(record));
       setValue("costSqm", calcCostSqm(asset, record));
       setValue("kwhSqm", calcKwhSqm(asset, record));
-      setValue("pressure", record.pressure);
-      setValue("energyPct", record.energyPct);
-      setValue("cleaningPct", record.cleaningPct);
-      setValue("securityPct", record.securityPct);
-      setValue("maintenancePct", record.maintenancePct);
-      setValue("otherPct", record.otherPct);
+      setValue("waterSqm", calcWaterSqm(asset, record));
+      setValue("pressure", calcPressure(asset, record));
+      setValue("energyPct", costPercent(record, "energy"));
+      setValue("cleaningPct", costPercent(record, "cleaning"));
+      setValue("securityPct", costPercent(record, "security"));
+      setValue("maintenancePct", costPercent(record, "maintenance"));
+      setValue("otherPct", costPercent(record, "other"));
       setValue("notes", record.notes);
 
       document.querySelectorAll("[data-admin-field]").forEach(field => { field.disabled = !state.admin; });
@@ -691,14 +830,15 @@
       }
 
       if (canEditMonthly()) {
-        record.opex = numberValue("opex");
-        record.energy = numberValue("energy");
-        record.pressure = numberValue("pressure");
-        record.energyPct = numberValue("energyPct");
-        record.cleaningPct = numberValue("cleaningPct");
-        record.securityPct = numberValue("securityPct");
-        record.maintenancePct = numberValue("maintenancePct");
-        record.otherPct = numberValue("otherPct");
+        record.costs = {
+          energy: numberValue("energyCost"),
+          cleaning: numberValue("cleaningCost"),
+          security: numberValue("securityCost"),
+          maintenance: numberValue("maintenanceCost"),
+          other: numberValue("otherCost")
+        };
+        record.energyKwh = numberValue("energyKwh");
+        record.waterM3 = numberValue("waterM3");
         record.notes = byId("notes").value.trim();
       }
 
@@ -722,11 +862,26 @@
     function updateDerived() {
       const asset = selectedAsset();
       const record = {
-        opex: numberValue("opex"),
-        energy: numberValue("energy")
+        costs: {
+          energy: numberValue("energyCost"),
+          cleaning: numberValue("cleaningCost"),
+          security: numberValue("securityCost"),
+          maintenance: numberValue("maintenanceCost"),
+          other: numberValue("otherCost")
+        },
+        energyKwh: numberValue("energyKwh"),
+        waterM3: numberValue("waterM3")
       };
+      setValue("totalCost", totalCostK(record));
       setValue("costSqm", calcCostSqm(asset, record));
       setValue("kwhSqm", calcKwhSqm(asset, record));
+      setValue("waterSqm", calcWaterSqm(asset, record));
+      setValue("pressure", calcPressure(asset, record));
+      setValue("energyPct", costPercent(record, "energy"));
+      setValue("cleaningPct", costPercent(record, "cleaning"));
+      setValue("securityPct", costPercent(record, "security"));
+      setValue("maintenancePct", costPercent(record, "maintenance"));
+      setValue("otherPct", costPercent(record, "other"));
     }
 
     document.addEventListener("click", event => {
@@ -746,8 +901,9 @@
     });
 
     byId("entryForm").addEventListener("submit", saveEntry);
-    byId("opex").addEventListener("input", updateDerived);
-    byId("energy").addEventListener("input", updateDerived);
+    ["energyCost", "cleaningCost", "securityCost", "maintenanceCost", "otherCost", "energyKwh", "waterM3"].forEach(id => {
+      byId(id).addEventListener("input", updateDerived);
+    });
 
     byId("adminBtn").addEventListener("click", () => {
       if (state.admin) {
