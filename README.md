@@ -33,6 +33,8 @@ The app loads the Google Sheet at runtime through Google Visualization JSONP, th
 
 Use `Portfolio Data` for the current dashboard output table. Use `Monthly Inputs` for property-by-month data entry: each asset has Jun-May rows, with yellow cells for editable monthly inputs and blue cells for reference/calculated fields.
 
+`data-entry.html` is the controlled UAT input mockup. Normal users can edit only the current month; admin mode (`GPM2026`) unlocks historical months and slower-changing asset basics such as GFA/NLA.
+
 ## GitHub Pages
 
 Publish from the `main` branch root.

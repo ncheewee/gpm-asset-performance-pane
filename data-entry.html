@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPM Monthly Data Entry</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #66717d;
+      --line: #dce3ea;
+      --page: #f4f6f8;
+      --panel: #fff;
+      --nav: #21313f;
+      --blue: #2f68b1;
+      --green: #11806a;
+      --yellow: #fff8e8;
+      --yellow-strong: #fff2cc;
+      --calc: #eef5fb;
+      --calc-strong: #ddebff;
+      --danger: #b83d34;
+      --shadow: 0 14px 34px rgba(24, 35, 47, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 22px;
+      color: white;
+      background: var(--nav);
+      box-shadow: 0 10px 24px rgba(20, 30, 40, .14);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: end;
+    }
+
+    .btn, .link-btn {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: var(--ink);
+      background: white;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    header .btn,
+    header .link-btn {
+      color: white;
+      border-color: rgba(255,255,255,.28);
+      background: rgba(255,255,255,.1);
+    }
+
+    header .btn:hover,
+    header .link-btn:hover { background: rgba(255,255,255,.18); }
+
+    .btn.primary {
+      border-color: transparent;
+      color: white;
+      background: var(--blue);
+    }
+
+    .btn.danger {
+      border-color: transparent;
+      color: white;
+      background: var(--danger);
+    }
+
+    main {
+      padding: 18px 22px 24px;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 56px;
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .panel-head strong { display: block; font-size: 15px; }
+    .panel-head span { color: var(--muted); font-size: 12px; }
+
+    .asset-list {
+      display: grid;
+      padding: 10px;
+      gap: 7px;
+    }
+
+    .asset-button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 48px;
+      padding: 8px 10px;
+      display: grid;
+      gap: 3px;
+      color: var(--ink);
+      background: white;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .asset-button.active {
+      border-color: var(--blue);
+      background: #f0f6fd;
+      box-shadow: inset 4px 0 0 var(--blue);
+    }
+
+    .asset-button.japan.active {
+      border-color: var(--green);
+      background: #eef8f5;
+      box-shadow: inset 4px 0 0 var(--green);
+    }
+
+    .asset-button span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .workbench {
+      display: grid;
+      gap: 18px;
+    }
+
+    .month-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .chip {
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 11px;
+      background: white;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    .chip.active {
+      color: white;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+
+    .chip.locked {
+      color: var(--muted);
+      background: #f5f7f9;
+    }
+
+    form {
+      padding: 15px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 800;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 39px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: white;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+      color: #4d5964;
+      opacity: 1;
+      background: var(--calc);
+      cursor: not-allowed;
+    }
+
+    .input-cell input,
+    .input-cell textarea {
+      background: var(--yellow);
+    }
+
+    .admin-cell input,
+    .admin-cell select {
+      background: var(--yellow);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-top: 2px;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-title:first-child { border-top: 0; }
+    .section-title strong { font-size: 14px; }
+    .status-pill {
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--muted);
+      background: #f0f2f4;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status-pill.open {
+      color: #7a5400;
+      background: var(--yellow-strong);
+    }
+
+    .status-pill.admin {
+      color: #0d6958;
+      background: #e5f4ef;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .save-status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .audit-list {
+      display: grid;
+      gap: 8px;
+      padding: 12px 15px 15px;
+      max-height: 270px;
+      overflow: auto;
+    }
+
+    .audit-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      display: grid;
+      gap: 3px;
+      background: white;
+      font-size: 13px;
+    }
+
+    .audit-item span { color: var(--muted); font-size: 12px; }
+
+    dialog {
+      width: min(420px, calc(100vw - 28px));
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0;
+      box-shadow: 0 24px 64px rgba(20, 30, 40, .24);
+    }
+
+    dialog::backdrop { background: rgba(20,30,40,.34); }
+
+    .dialog-body {
+      padding: 16px;
+      display: grid;
+      gap: 13px;
+    }
+
+    @media (max-width: 920px) {
+      header { grid-template-columns: 1fr; align-items: start; }
+      .header-actions { justify-content: start; }
+      main { grid-template-columns: 1fr; padding: 14px; }
+      .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-actions { align-items: stretch; }
+      .form-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Monthly Data Entry</h1>
+      <div class="header-actions">
+        <span id="roleBadge" class="status-pill open">User mode</span>
+        <button class="btn" id="adminBtn" type="button">Admin Login</button>
+        <a class="link-btn" href="index.html">Dashboard</a>
+      </div>
+    </header>
+
+    <main>
+      <aside class="panel">
+        <div class="panel-head">
+          <div><strong>Assets</strong><span id="assetCount">6 assets</span></div>
+        </div>
+        <div class="asset-list" id="assetList"></div>
+      </aside>
+
+      <section class="workbench">
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong id="formTitle">Asset</strong><span id="formSubtitle">Month</span></div>
+            <span id="editBadge" class="status-pill">Locked</span>
+          </div>
+          <div class="month-row" id="monthRow"></div>
+          <form id="entryForm">
+            <div class="section-title">
+              <strong>Asset Basics</strong>
+              <span class="status-pill" id="assetBasicsBadge">Admin only</span>
+            </div>
+            <div class="form-grid">
+              <div class="field admin-cell">
+                <label for="country">Country</label>
+                <select id="country" data-admin-field>
+                  <option>Singapore</option>
+                  <option>Japan</option>
+                </select>
+              </div>
+              <div class="field admin-cell">
+                <label for="type">Type</label>
+                <select id="type" data-admin-field>
+                  <option>Office</option>
+                  <option>Retail</option>
+                  <option>Logistics</option>
+                </select>
+              </div>
+              <div class="field admin-cell">
+                <label for="gfa">GFA</label>
+                <input id="gfa" type="number" min="0" step="1" data-admin-field>
+              </div>
+              <div class="field admin-cell">
+                <label for="nla">NLA</label>
+                <input id="nla" type="number" min="0" step="1" data-admin-field>
+              </div>
+            </div>
+
+            <div class="section-title">
+              <strong>Monthly Inputs</strong>
+              <span class="status-pill" id="monthlyBadge">Current month only</span>
+            </div>
+            <div class="form-grid">
+              <div class="field input-cell">
+                <label for="opex">Opex_m</label>
+                <input id="opex" type="number" min="0" step="0.01" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="energy">Energy_gwh</label>
+                <input id="energy" type="number" min="0" step="0.01" data-month-field>
+              </div>
+              <div class="field">
+                <label for="costSqm">Cost_sqm</label>
+                <input id="costSqm" type="number" disabled>
+              </div>
+              <div class="field">
+                <label for="kwhSqm">kWh_sqm</label>
+                <input id="kwhSqm" type="number" disabled>
+              </div>
+              <div class="field input-cell">
+                <label for="pressure">Pressure index</label>
+                <input id="pressure" type="number" min="0" max="100" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="energyPct">Energy %</label>
+                <input id="energyPct" type="number" min="0" max="100" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="cleaningPct">Cleaning %</label>
+                <input id="cleaningPct" type="number" min="0" max="100" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="securityPct">Security %</label>
+                <input id="securityPct" type="number" min="0" max="100" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="maintenancePct">Maintenance %</label>
+                <input id="maintenancePct" type="number" min="0" max="100" step="1" data-month-field>
+              </div>
+              <div class="field input-cell">
+                <label for="otherPct">Other %</label>
+                <input id="otherPct" type="number" min="0" max="100" step="1" data-month-field>
+              </div>
+            </div>
+            <div class="field input-cell">
+              <label for="notes">Notes</label>
+              <textarea id="notes" data-month-field></textarea>
+            </div>
+
+            <div class="form-actions">
+              <span class="save-status" id="saveStatus">Ready</span>
+              <button class="btn primary" id="saveBtn" type="submit">Save Entry</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div><strong>Audit Log</strong><span>Local UAT trail for this prototype</span></div>
+            <button class="btn" id="resetBtn" type="button">Reset Mock Data</button>
+          </div>
+          <div class="audit-list" id="auditList"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="adminDialog">
+    <form method="dialog" class="dialog-body" id="adminForm">
+      <div>
+        <strong>Admin Login</strong>
+        <p class="save-status">Admin mode unlocks asset basics and historical months.</p>
+      </div>
+      <div class="field">
+        <label for="adminPassword">Password</label>
+        <input id="adminPassword" type="password" autocomplete="current-password">
+      </div>
+      <div class="form-actions">
+        <button class="btn" value="cancel" type="submit">Cancel</button>
+        <button class="btn primary" value="login" type="submit">Login</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const CURRENT_MONTH = "May";
+    const ADMIN_PASSWORD = "GPM2026";
+    const months = ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
+    const storageKey = "gpm-entry-prototype-v1";
+    const fallbackAssets = [
+      { name: "VivoCity", label: "VivoCity", country: "Singapore", type: "Retail", gfa: 178000, nla: 142000, opex: 1.84, energy: 4.43, trend: [48,45,50,53,56,58,62,55,54,61,68,72], cost: { energy: 41, cleaning: 18, security: 15, maintenance: 17, other: 9 } },
+      { name: "MBC", label: "MBC", country: "Singapore", type: "Office", gfa: 268000, nla: 226000, opex: 2.96, energy: 7.81, trend: [46,48,50,52,55,57,59,61,66,70,79,86], cost: { energy: 46, cleaning: 14, security: 13, maintenance: 18, other: 9 } },
+      { name: "ARC", label: "ARC", country: "Singapore", type: "Retail", gfa: 74000, nla: 58000, opex: 0.72, energy: 1.31, trend: [40,42,47,48,52,56,58,61,59,66,72,78], cost: { energy: 38, cleaning: 20, security: 16, maintenance: 18, other: 8 } },
+      { name: "mTower", label: "mTower", country: "Singapore", type: "Office", gfa: 96000, nla: 79000, opex: 0.91, energy: 1.68, trend: [42,41,43,45,47,49,50,52,54,57,60,63], cost: { energy: 35, cleaning: 17, security: 18, maintenance: 20, other: 10 } },
+      { name: "Japan Logistics A", label: "J-Log", country: "Japan", type: "Logistics", gfa: 138000, nla: 124000, opex: 1.08, energy: 3.09, trend: [55,53,51,50,48,47,46,45,44,43,42,41], cost: { energy: 32, cleaning: 10, security: 11, maintenance: 29, other: 18 } },
+      { name: "Japan Office Cluster", label: "J-Office", country: "Japan", type: "Office", gfa: 122000, nla: 107000, opex: 0.91, energy: 3.28, trend: [45,46,47,48,49,50,52,53,55,57,59,59], cost: { energy: 39, cleaning: 13, security: 13, maintenance: 22, other: 13 } }
+    ];
+
+    const qs = selector => document.querySelector(selector);
+    const byId = id => document.getElementById(id);
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const currentUser = () => state.admin ? "admin" : "user";
+
+    function seedState() {
+      const records = {};
+      fallbackAssets.forEach(asset => {
+        records[asset.name] = {};
+        months.forEach((month, index) => {
+          const monthFactor = .92 + index * .014;
+          records[asset.name][month] = {
+            opex: Number((asset.opex * monthFactor).toFixed(2)),
+            energy: Number((asset.energy * (.9 + index * .015)).toFixed(2)),
+            pressure: asset.trend[index],
+            energyPct: asset.cost.energy,
+            cleaningPct: asset.cost.cleaning,
+            securityPct: asset.cost.security,
+            maintenancePct: asset.cost.maintenance,
+            otherPct: asset.cost.other,
+            notes: index < 11 ? "Submitted" : ""
+          };
+        });
+      });
+      return { assets: clone(fallbackAssets), records, audit: [], admin: false };
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey));
+        return saved && saved.assets && saved.records ? saved : seedState();
+      } catch {
+        return seedState();
+      }
+    }
+
+    let state = loadState();
+    state.admin = false;
+    let selectedAssetName = state.assets[0].name;
+    let selectedMonth = CURRENT_MONTH;
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify({ ...state, admin: false }));
+    }
+
+    function selectedAsset() {
+      return state.assets.find(asset => asset.name === selectedAssetName) || state.assets[0];
+    }
+
+    function selectedRecord() {
+      const asset = selectedAsset();
+      state.records[asset.name] ||= {};
+      state.records[asset.name][selectedMonth] ||= {};
+      return state.records[asset.name][selectedMonth];
+    }
+
+    function isCurrentMonth() {
+      return selectedMonth === CURRENT_MONTH;
+    }
+
+    function canEditMonthly() {
+      return state.admin || isCurrentMonth();
+    }
+
+    function countryClass(country) {
+      return String(country || "").toLowerCase() === "japan" ? "japan" : "singapore";
+    }
+
+    function numberValue(id) {
+      const value = Number(byId(id).value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function setValue(id, value) {
+      byId(id).value = value ?? "";
+    }
+
+    function calcCostSqm(asset, record) {
+      return asset.nla ? (Number(record.opex || 0) * 1000000 / asset.nla).toFixed(2) : "";
+    }
+
+    function calcKwhSqm(asset, record) {
+      return asset.nla ? (Number(record.energy || 0) * 1000000 / asset.nla).toFixed(1) : "";
+    }
+
+    function renderAssets() {
+      byId("assetCount").textContent = `${state.assets.length} assets`;
+      byId("assetList").innerHTML = state.assets.map(asset => `
+        <button class="asset-button ${countryClass(asset.country)} ${asset.name === selectedAssetName ? "active" : ""}" type="button" data-asset="${asset.name}">
+          <strong>${asset.label || asset.name}</strong>
+          <span>${asset.country} · ${asset.type}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderMonths() {
+      byId("monthRow").innerHTML = months.map(month => `
+        <button class="chip ${month === selectedMonth ? "active" : ""} ${month !== CURRENT_MONTH ? "locked" : ""}" type="button" data-month="${month}">
+          ${month}
+        </button>
+      `).join("");
+    }
+
+    function renderForm() {
+      const asset = selectedAsset();
+      const record = selectedRecord();
+      const monthlyOpen = canEditMonthly();
+      byId("formTitle").textContent = asset.name;
+      byId("formSubtitle").textContent = `${selectedMonth} · ${asset.country} · ${asset.type}`;
+      byId("roleBadge").textContent = state.admin ? "Admin mode" : "User mode";
+      byId("roleBadge").className = `status-pill ${state.admin ? "admin" : "open"}`;
+      byId("adminBtn").textContent = state.admin ? "Exit Admin" : "Admin Login";
+      byId("editBadge").textContent = monthlyOpen ? "Editable" : "Read only";
+      byId("editBadge").className = `status-pill ${monthlyOpen ? "open" : ""}`;
+      byId("assetBasicsBadge").textContent = state.admin ? "Admin editable" : "Admin only";
+      byId("assetBasicsBadge").className = `status-pill ${state.admin ? "admin" : ""}`;
+      byId("monthlyBadge").textContent = monthlyOpen ? `${selectedMonth} editable` : "Historical record";
+      byId("monthlyBadge").className = `status-pill ${monthlyOpen ? "open" : ""}`;
+
+      setValue("country", asset.country);
+      setValue("type", asset.type);
+      setValue("gfa", asset.gfa);
+      setValue("nla", asset.nla);
+      setValue("opex", record.opex);
+      setValue("energy", record.energy);
+      setValue("costSqm", calcCostSqm(asset, record));
+      setValue("kwhSqm", calcKwhSqm(asset, record));
+      setValue("pressure", record.pressure);
+      setValue("energyPct", record.energyPct);
+      setValue("cleaningPct", record.cleaningPct);
+      setValue("securityPct", record.securityPct);
+      setValue("maintenancePct", record.maintenancePct);
+      setValue("otherPct", record.otherPct);
+      setValue("notes", record.notes);
+
+      document.querySelectorAll("[data-admin-field]").forEach(field => { field.disabled = !state.admin; });
+      document.querySelectorAll("[data-month-field]").forEach(field => { field.disabled = !monthlyOpen; });
+      byId("saveBtn").disabled = !state.admin && !isCurrentMonth();
+    }
+
+    function renderAudit() {
+      const entries = state.audit.slice(-12).reverse();
+      byId("auditList").innerHTML = entries.length ? entries.map(item => `
+        <div class="audit-item">
+          <strong>${item.asset} · ${item.month}</strong>
+          <span>${item.when} · ${item.user}</span>
+          <div>${item.summary}</div>
+        </div>
+      `).join("") : `<div class="audit-item"><strong>No saved changes yet</strong><span>Entries will appear here after Save Entry.</span></div>`;
+    }
+
+    function renderAll() {
+      renderAssets();
+      renderMonths();
+      renderForm();
+      renderAudit();
+    }
+
+    function saveEntry(event) {
+      event.preventDefault();
+      const asset = selectedAsset();
+      const record = selectedRecord();
+      const before = JSON.stringify({ asset, record });
+
+      if (state.admin) {
+        asset.country = byId("country").value;
+        asset.type = byId("type").value;
+        asset.gfa = numberValue("gfa");
+        asset.nla = numberValue("nla");
+      }
+
+      if (canEditMonthly()) {
+        record.opex = numberValue("opex");
+        record.energy = numberValue("energy");
+        record.pressure = numberValue("pressure");
+        record.energyPct = numberValue("energyPct");
+        record.cleaningPct = numberValue("cleaningPct");
+        record.securityPct = numberValue("securityPct");
+        record.maintenancePct = numberValue("maintenancePct");
+        record.otherPct = numberValue("otherPct");
+        record.notes = byId("notes").value.trim();
+      }
+
+      const after = JSON.stringify({ asset, record });
+      if (before !== after) {
+        state.audit.push({
+          asset: asset.name,
+          month: selectedMonth,
+          user: currentUser(),
+          when: new Date().toLocaleString(),
+          summary: state.admin ? "Saved admin and monthly fields." : "Saved current-month inputs."
+        });
+        saveState();
+        byId("saveStatus").textContent = "Saved";
+      } else {
+        byId("saveStatus").textContent = "No changes";
+      }
+      renderAll();
+    }
+
+    function updateDerived() {
+      const asset = selectedAsset();
+      const record = {
+        opex: numberValue("opex"),
+        energy: numberValue("energy")
+      };
+      setValue("costSqm", calcCostSqm(asset, record));
+      setValue("kwhSqm", calcKwhSqm(asset, record));
+    }
+
+    document.addEventListener("click", event => {
+      const assetButton = event.target.closest("[data-asset]");
+      if (assetButton) {
+        selectedAssetName = assetButton.dataset.asset;
+        byId("saveStatus").textContent = "Ready";
+        renderAll();
+      }
+
+      const monthButton = event.target.closest("[data-month]");
+      if (monthButton) {
+        selectedMonth = monthButton.dataset.month;
+        byId("saveStatus").textContent = "Ready";
+        renderAll();
+      }
+    });
+
+    byId("entryForm").addEventListener("submit", saveEntry);
+    byId("opex").addEventListener("input", updateDerived);
+    byId("energy").addEventListener("input", updateDerived);
+
+    byId("adminBtn").addEventListener("click", () => {
+      if (state.admin) {
+        state.admin = false;
+        saveState();
+        renderAll();
+      } else {
+        byId("adminPassword").value = "";
+        byId("adminDialog").showModal();
+      }
+    });
+
+    byId("adminForm").addEventListener("submit", event => {
+      if (event.submitter && event.submitter.value === "login") {
+        event.preventDefault();
+        if (byId("adminPassword").value === ADMIN_PASSWORD) {
+          state.admin = true;
+          saveState();
+          byId("adminDialog").close();
+          renderAll();
+        } else {
+          byId("adminPassword").value = "";
+          byId("adminPassword").placeholder = "Try again";
+        }
+      }
+    });
+
+    byId("resetBtn").addEventListener("click", () => {
+      state = seedState();
+      selectedAssetName = state.assets[0].name;
+      selectedMonth = CURRENT_MONTH;
+      saveState();
+      renderAll();
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
