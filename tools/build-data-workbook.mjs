@@ -21,6 +21,7 @@ const OUTPUT_FILL_SOFT = "#EEF5FB";
 const HEADER_FILL = "#1F4E78";
 const HEADER_FONT = "#FFFFFF";
 const BORDER = "#D9E2EC";
+const SHEET_PROTECTION_PASSWORD_HASH = "DF4A"; // GPM2026
 
 const inputFields = new Set([
   "name",
@@ -178,7 +179,7 @@ async function protectWorkbook(sheetName, inputCols, dataRowStart, dataRowEnd) {
     return `<${worksheetPrefix}c${before} r="${col}${rowText}"${after} s="${newStyle}">`;
   });
 
-  const protection = `<${worksheetPrefix}sheetProtection sheet="1" objects="1" scenarios="1" selectLockedCells="0" selectUnlockedCells="1"/>`;
+  const protection = `<${worksheetPrefix}sheetProtection sheet="1" objects="1" scenarios="1" selectLockedCells="0" selectUnlockedCells="1" password="${SHEET_PROTECTION_PASSWORD_HASH}"/>`;
   if (!sheetXml.includes("<sheetProtection")) {
     sheetXml = sheetXml.replace(new RegExp(`(<${worksheetPrefix}sheetViews\\b[\\s\\S]*?</${worksheetPrefix}sheetViews>)`), `$1${protection}`);
   }
